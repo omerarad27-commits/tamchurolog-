@@ -199,6 +199,42 @@ async function main() {
     bAfter?.name === "Business B",
     `name is now "${bAfter?.name}"`,
   );
+
+  console.log("\n5. Logo storage isolation");
+  // A 1x1 PNG is enough to exercise the storage policies.
+  const pngBytes = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+    "base64",
+  );
+  const pngBlob = new Blob([pngBytes], { type: "image/png" });
+
+  const ownUpload = await asA.storage
+    .from("logos")
+    .upload(`${owners.a.businessId}/logo-test.png`, pngBlob, {
+      contentType: "image/png",
+      upsert: true,
+    });
+  check(
+    "can upload a logo into its own folder",
+    !ownUpload.error,
+    ownUpload.error ? ownUpload.error.message : "",
+  );
+
+  const forgedUpload = await asA.storage
+    .from("logos")
+    .upload(`${owners.b.businessId}/logo-test.png`, pngBlob, {
+      contentType: "image/png",
+      upsert: true,
+    });
+  check(
+    "cannot upload a logo into B's folder",
+    Boolean(forgedUpload.error),
+    forgedUpload.error ? forgedUpload.error.message : "upload unexpectedly succeeded",
+  );
+
+  await admin.storage
+    .from("logos")
+    .remove([`${owners.a.businessId}/logo-test.png`]);
 }
 
 let exitCode = 0;

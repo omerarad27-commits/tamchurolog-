@@ -7,9 +7,21 @@
 
 export type AuthFormState = { error: string | null };
 
+/** Result of a form Server Action that stays on the same page. */
+export type FormState = {
+  error: string | null;
+  success: string | null;
+};
+
+export const EMPTY_FORM_STATE: FormState = { error: null, success: null };
+
 export const MIN_PASSWORD_LENGTH = 8;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function isValidEmail(value: string): boolean {
+  return EMAIL_PATTERN.test(value);
+}
 
 /** Returns a Hebrew error message, or null when the credentials look usable. */
 export function validateCredentials(

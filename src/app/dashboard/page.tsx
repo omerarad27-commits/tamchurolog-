@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { requireBusiness } from "@/lib/auth";
 
@@ -25,15 +26,20 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <section className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
-        <h2 className="text-sm font-semibold text-muted">לקוחות</h2>
-        <p className="numeric mt-1 text-3xl font-bold">
-          {error ? "—" : (count ?? 0)}
-        </p>
-        <p className="mt-1 text-sm text-muted">
-          ניהול הלקוחות ייפתח בשלב הבא.
-        </p>
-      </section>
+      <Link
+        href="/dashboard/clients"
+        className="flex items-center gap-4 rounded-2xl border border-border bg-surface p-5 shadow-sm transition-colors hover:bg-background"
+      >
+        <div className="flex-1">
+          <h2 className="text-sm font-semibold text-muted">לקוחות</h2>
+          <p className="numeric mt-1 text-3xl font-bold">
+            {error ? "—" : (count ?? 0)}
+          </p>
+        </div>
+        <span aria-hidden="true" className="text-muted">
+          ‹
+        </span>
+      </Link>
 
       <section className="rounded-2xl border border-dashed border-border p-5">
         <h2 className="font-semibold">הצעות מחיר</h2>
