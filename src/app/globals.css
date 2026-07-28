@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+/* Design tokens. Light theme only for the MVP — the app is used outdoors on phones,
+   and a single high-contrast theme keeps the RTL layout predictable. */
+:root {
+  --background: #f5f6f8;
+  --surface: #ffffff;
+  --foreground: #101828;
+  --muted: #667085;
+  --border: #e4e7ec;
+  --brand: #1d4ed8;
+  --brand-soft: #eff4ff;
+  --brand-foreground: #ffffff;
+  --success: #067647;
+  --success-soft: #ecfdf3;
+  --warning: #b54708;
+  --warning-soft: #fffaeb;
+  --danger: #b42318;
+  --danger-soft: #fef3f2;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+
+  --font-sans: var(--font-assistant), system-ui, sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-assistant), system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* Prices, quantities and dates must stay legible inside RTL text. */
+.numeric {
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
