@@ -235,6 +235,131 @@ async function main() {
   await admin.storage
     .from("logos")
     .remove([`${owners.a.businessId}/logo-test.png`]);
+
+  console.log("\n6. Quotes: numbering, totals and isolation");
+
+  const { data: clientOfA } = await asA
+    .from("clients")
+    .select("id")
+    .eq("full_name", "Client of A")
+    .single();
+
+  const createQuote = async () => {
+    const { data, error } = await asA
+      .from("quotes")
+      .insert({ business_id: owners.a.businessId, client_id: clientOfA.id })
+      .select("id, quote_number, public_token, subtotal, total")
+      .single();
+    if (error) throw new Error(`quote insert failed: ${error.message}`);
+    return data;
+  };
+
+  const firstQuote = await createQuote();
+  const secondQuote = await createQuote();
+
+  check(
+    "quote numbers are allocated per business and increment",
+    secondQuote.quote_number === firstQuote.quote_number + 1,
+    `${firstQuote.quote_number} then ${secondQuote.quote_number}`,
+  );
+
+  check(
+    "public_token is 32 random hex chars, not the row id",
+    /^[0-9a-f]{32}$/.test(firstQuote.public_token) &&
+      firstQuote.public_token !== firstQuote.id.replace(/-/g, "") &&
+      firstQuote.public_token !== secondQuote.public_token,
+    firstQuote.public_token,
+  );
+
+  /* 2 x 150.50 + 1 x 99.99 + 3 x 0.33 = 401.98 */
+  const { error: linesError } = await asA.from("quote_line_items").insert([
+    { quote_id: firstQuote.id, description: "Labour", quantity: 2, unit_price: 150.5, sort_order: 0 },
+    { quote_id: firstQuote.id, description: "Parts", quantity: 1, unit_price: 99.99, sort_order: 1 },
+    { quote_id: firstQuote.id, description: "Screws", quantity: 3, unit_price: 0.33, sort_order: 2 },
+  ]);
+  check("can add line items to its own quote", !linesError,
+    linesError ? linesError.message : "");
+
+  const { data: totalled } = await asA
+    .from("quotes")
+    .select("subtotal, total")
+    .eq("id", firstQuote.id)
+    .single();
+  check(
+    "trigger recalculates the quote total from the line items",
+    Number(totalled.total) === 401.98 && Number(totalled.subtotal) === 401.98,
+    `subtotal ${totalled.subtotal}, total ${totalled.total}`,
+  );
+
+  /* Deleting a line must pull the total back down. */
+  const { data: lineToDelete } = await asA
+    .from("quote_line_items")
+    .select("id")
+    .eq("quote_id", firstQuote.id)
+    .eq("description", "Screws")
+    .single();
+  await asA.from("quote_line_items").delete().eq("id", lineToDelete.id);
+  const { data: afterDelete } = await asA
+    .from("quotes")
+    .select("total")
+    .eq("id", firstQuote.id)
+    .single();
+  check(
+    "removing a line item lowers the stored total",
+    Number(afterDelete.total) === 400.99,
+    `total is now ${afterDelete.total}`,
+  );
+
+  /* Now the same attacks as before, but against quotes. */
+  const asB = createClient(url, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { error: signInBError } = await asB.auth.signInWithPassword({
+    email: owners.b.email,
+    password: PASSWORD,
+  });
+  if (signInBError) throw new Error(`sign in as B failed: ${signInBError.message}`);
+
+  const bReadsQuote = await asB
+    .from("quotes")
+    .select("id")
+    .eq("id", firstQuote.id);
+  check(
+    "B cannot read A's quote by its exact id",
+    (bReadsQuote.data ?? []).length === 0,
+    `rows returned: ${(bReadsQuote.data ?? []).length}`,
+  );
+
+  const bReadsLines = await asB
+    .from("quote_line_items")
+    .select("id")
+    .eq("quote_id", firstQuote.id);
+  check(
+    "B cannot read the line items of A's quote",
+    (bReadsLines.data ?? []).length === 0,
+    `rows returned: ${(bReadsLines.data ?? []).length}`,
+  );
+
+  const bInjectsLine = await asB
+    .from("quote_line_items")
+    .insert({ quote_id: firstQuote.id, description: "Injected", quantity: 1, unit_price: 1 })
+    .select();
+  check(
+    "B cannot add a line item to A's quote",
+    Boolean(bInjectsLine.error),
+    bInjectsLine.error ? bInjectsLine.error.code : "insert unexpectedly succeeded",
+  );
+
+  const bStealsPrice = await asB
+    .from("quotes")
+    .update({ status: "approved" })
+    .eq("id", firstQuote.id)
+    .select();
+  check(
+    "B cannot approve A's quote",
+    (bStealsPrice.data ?? []).length === 0,
+    `rows updated: ${(bStealsPrice.data ?? []).length}`,
+  );
 }
 
 let exitCode = 0;

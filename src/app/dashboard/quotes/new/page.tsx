@@ -1,0 +1,49 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+
+import { requireBusiness } from "@/lib/auth";
+import type { Client } from "@/lib/types";
+
+import { QuoteBuilder } from "./quote-builder";
+
+export const metadata: Metadata = {
+  title: "הצעה חדשה | תמחורולוג",
+};
+
+/** Quotes default to two weeks of validity; the owner can change it per quote. */
+const DEFAULT_VALIDITY_DAYS = 14;
+
+export default async function NewQuotePage() {
+  const { supabase, business } = await requireBusiness();
+
+  const { data } = await supabase
+    .from("clients")
+    .select("id, business_id, full_name, phone, email, notes, created_at")
+    .eq("business_id", business.id)
+    .order("full_name", { ascending: true });
+
+  const clients = (data ?? []) as Client[];
+
+  const validUntil = new Date();
+  validUntil.setDate(validUntil.getDate() + DEFAULT_VALIDITY_DAYS);
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div>
+        <Link
+          href="/dashboard"
+          className="text-sm font-medium text-muted hover:text-foreground"
+        >
+          ‹ חזרה להצעות
+        </Link>
+        <h1 className="mt-2 text-2xl font-bold">הצעה חדשה</h1>
+      </div>
+
+      <QuoteBuilder
+        clients={clients}
+        defaultValidUntil={validUntil.toISOString().slice(0, 10)}
+        defaultNotes={business.default_terms ?? ""}
+      />
+    </div>
+  );
+}

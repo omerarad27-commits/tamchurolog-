@@ -1,0 +1,284 @@
+"use client";
+
+import Link from "next/link";
+import { useActionState, useId, useState } from "react";
+
+import { Alert } from "@/components/ui/alert";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { TextArea } from "@/components/ui/textarea";
+import { TextField } from "@/components/ui/text-field";
+import { formatILS } from "@/lib/format";
+import type { Client } from "@/lib/types";
+import { EMPTY_FORM_STATE } from "@/lib/validation";
+
+import { createQuoteAction } from "../actions";
+
+type DraftLine = {
+  key: string;
+  description: string;
+  quantity: string;
+  unitPrice: string;
+};
+
+const NEW_CLIENT = "__new__";
+
+let keyCounter = 0;
+function emptyLine(): DraftLine {
+  keyCounter += 1;
+  return {
+    key: `line-${keyCounter}`,
+    description: "",
+    quantity: "1",
+    unitPrice: "",
+  };
+}
+
+function toNumber(value: string): number {
+  const parsed = Number(value.trim().replace(",", "."));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+export function QuoteBuilder({
+  clients,
+  defaultValidUntil,
+  defaultNotes,
+}: {
+  clients: Client[];
+  defaultValidUntil: string;
+  defaultNotes: string;
+}) {
+  const [state, formAction] = useActionState(
+    createQuoteAction,
+    EMPTY_FORM_STATE,
+  );
+
+  const [clientId, setClientId] = useState(
+    clients.length === 1 ? clients[0].id : "",
+  );
+  const [lines, setLines] = useState<DraftLine[]>(() => [emptyLine()]);
+  const clientSelectId = useId();
+
+  const updateLine = (key: string, patch: Partial<DraftLine>) => {
+    setLines((current) =>
+      current.map((line) => (line.key === key ? { ...line, ...patch } : line)),
+    );
+  };
+
+  const removeLine = (key: string) => {
+    setLines((current) =>
+      current.length === 1
+        ? [emptyLine()]
+        : current.filter((line) => line.key !== key),
+    );
+  };
+
+  const moveLine = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= lines.length) return;
+    setLines((current) => {
+      const next = [...current];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
+
+  const total = lines.reduce(
+    (sum, line) => sum + toNumber(line.quantity) * toNumber(line.unitPrice),
+    0,
+  );
+
+  return (
+    <form action={formAction} className="flex flex-col gap-5" noValidate>
+      <input type="hidden" name="lines" value={JSON.stringify(lines)} />
+
+      {/* ---------------------------------------------------------- client */}
+      <section className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 shadow-sm">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={clientSelectId} className="text-sm font-medium">
+            לקוח
+          </label>
+          <select
+            id={clientSelectId}
+            name="clientId"
+            value={clientId}
+            onChange={(event) => setClientId(event.target.value)}
+            className="h-12 w-full rounded-xl border border-border bg-surface px-3 text-base focus:border-brand focus:outline-2 focus:outline-brand"
+            required
+          >
+            <option value="">בחר לקוח…</option>
+            {clients.map((client) => (
+              <option key={client.id} value={client.id}>
+                {client.full_name}
+              </option>
+            ))}
+            <option value={NEW_CLIENT}>+ לקוח חדש</option>
+          </select>
+        </div>
+
+        {clientId === NEW_CLIENT ? (
+          <div className="flex flex-col gap-3 rounded-xl bg-background p-3">
+            <TextField
+              label="שם הלקוח החדש"
+              name="newClientName"
+              placeholder="לדוגמה: דנה לוי"
+              maxLength={80}
+            />
+            <TextField
+              label="טלפון"
+              name="newClientPhone"
+              type="tel"
+              inputMode="tel"
+              dir="ltr"
+              className="text-start"
+              placeholder="054-1234567"
+              hint="בלי טלפון לא נוכל לשלוח את ההצעה בוואטסאפ."
+            />
+          </div>
+        ) : null}
+      </section>
+
+      {/* ----------------------------------------------------- line items */}
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-bold">פירוט העבודה</h2>
+
+        {lines.map((line, index) => {
+          const lineTotal = toNumber(line.quantity) * toNumber(line.unitPrice);
+
+          return (
+            <div
+              key={line.key}
+              className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 shadow-sm"
+            >
+              <div className="flex items-start gap-2">
+                <span className="numeric mt-3 text-sm font-semibold text-muted">
+                  {index + 1}.
+                </span>
+                <input
+                  aria-label={`תיאור פריט ${index + 1}`}
+                  value={line.description}
+                  onChange={(event) =>
+                    updateLine(line.key, { description: event.target.value })
+                  }
+                  placeholder="תיאור העבודה או החומר"
+                  maxLength={300}
+                  className="h-12 w-full rounded-xl border border-border bg-surface px-3 text-base placeholder:text-muted/70 focus:border-brand focus:outline-2 focus:outline-brand"
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="text-xs font-medium text-muted">כמות</label>
+                  <input
+                    value={line.quantity}
+                    onChange={(event) =>
+                      updateLine(line.key, { quantity: event.target.value })
+                    }
+                    inputMode="decimal"
+                    dir="ltr"
+                    className="numeric h-12 w-full rounded-xl border border-border bg-surface px-3 text-start text-base focus:border-brand focus:outline-2 focus:outline-brand"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs font-medium text-muted">
+                    מחיר ליחידה
+                  </label>
+                  <input
+                    value={line.unitPrice}
+                    onChange={(event) =>
+                      updateLine(line.key, { unitPrice: event.target.value })
+                    }
+                    inputMode="decimal"
+                    dir="ltr"
+                    placeholder="0"
+                    className="numeric h-12 w-full rounded-xl border border-border bg-surface px-3 text-start text-base focus:border-brand focus:outline-2 focus:outline-brand"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
+                <span className="numeric font-semibold">
+                  {formatILS(lineTotal)}
+                </span>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => moveLine(index, -1)}
+                    disabled={index === 0}
+                    aria-label={`העבר פריט ${index + 1} למעלה`}
+                    className="h-10 w-10 rounded-lg text-muted transition-colors hover:bg-background disabled:opacity-30"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveLine(index, 1)}
+                    disabled={index === lines.length - 1}
+                    aria-label={`העבר פריט ${index + 1} למטה`}
+                    className="h-10 w-10 rounded-lg text-muted transition-colors hover:bg-background disabled:opacity-30"
+                  >
+                    ↓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeLine(line.key)}
+                    aria-label={`הסר פריט ${index + 1}`}
+                    className="h-10 w-10 rounded-lg text-danger transition-colors hover:bg-danger-soft"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        <button
+          type="button"
+          onClick={() => setLines((current) => [...current, emptyLine()])}
+          className="h-12 w-full rounded-xl border border-dashed border-border text-base font-semibold text-brand transition-colors hover:bg-brand-soft"
+        >
+          + הוספת פריט
+        </button>
+      </section>
+
+      {/* ---------------------------------------------------------- total */}
+      <section className="flex items-center justify-between rounded-2xl border border-border bg-surface p-5 shadow-sm">
+        <span className="text-base font-semibold">סה״כ</span>
+        <span className="numeric text-2xl font-bold">{formatILS(total)}</span>
+      </section>
+
+      {/* --------------------------------------------------------- details */}
+      <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5 shadow-sm">
+        <TextField
+          label="בתוקף עד"
+          name="validUntil"
+          type="date"
+          dir="ltr"
+          className="text-start"
+          defaultValue={defaultValidUntil}
+        />
+
+        <TextArea
+          label="הערות ותנאים"
+          name="notes"
+          rows={4}
+          defaultValue={defaultNotes}
+          hint="נלקח מברירת המחדל בהגדרות. אפשר לשנות עבור ההצעה הזו."
+        />
+      </section>
+
+      {state.error ? <Alert>{state.error}</Alert> : null}
+
+      <div className="flex flex-col gap-2">
+        <SubmitButton pendingLabel="שומר…">שמירה כטיוטה</SubmitButton>
+        <Link
+          href="/dashboard"
+          className="flex h-12 w-full items-center justify-center rounded-xl border border-border bg-surface text-base font-semibold transition-colors hover:bg-background"
+        >
+          ביטול
+        </Link>
+      </div>
+    </form>
+  );
+}

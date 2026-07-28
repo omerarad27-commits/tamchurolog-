@@ -20,3 +20,45 @@ export type Client = {
   notes: string | null;
   created_at: string;
 };
+
+export type QuoteStatus =
+  | "draft"
+  | "sent"
+  | "viewed"
+  | "approved"
+  | "declined"
+  | "expired";
+
+export type Quote = {
+  id: string;
+  business_id: string;
+  client_id: string;
+  quote_number: number;
+  status: QuoteStatus;
+  issued_at: string;
+  sent_at: string | null;
+  valid_until: string | null;
+  notes: string | null;
+  /** Postgres numeric arrives as a string over PostgREST; parse before doing maths. */
+  subtotal: string;
+  tax_amount: string | null;
+  total: string;
+  public_token: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type QuoteLineItem = {
+  id: string;
+  quote_id: string;
+  description: string;
+  quantity: string;
+  unit_price: string;
+  line_total: string;
+  sort_order: number;
+};
+
+/** A quote joined with the client it belongs to, as shown in lists. */
+export type QuoteWithClient = Quote & {
+  clients: Pick<Client, "id" | "full_name" | "phone"> | null;
+};
