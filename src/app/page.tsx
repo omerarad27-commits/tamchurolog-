@@ -1,7 +1,10 @@
+import Link from "next/link";
+
+import { getUser } from "@/lib/auth";
 import { checkSupabaseHealth } from "@/lib/supabase/health";
 
 export default async function HomePage() {
-  const health = await checkSupabaseHealth();
+  const [health, user] = await Promise.all([checkSupabaseHealth(), getUser()]);
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-5 px-5 py-12">
@@ -19,11 +22,37 @@ export default async function HomePage() {
       </header>
 
       <section className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
-        <h2 className="text-lg font-semibold">המערכת פועלת</h2>
+        <h2 className="text-lg font-semibold">
+          שולחים הצעת מחיר, ויודעים מה קרה איתה
+        </h2>
         <p className="mt-1 text-sm leading-relaxed text-muted">
-          שלב 0 הושלם: השלד הוקם, העברית והכיווניות עובדות, והחיבור למסד הנתונים
-          נבדק בכל טעינה של הדף הזה.
+          כל הצעה מקבלת קישור אישי. רואים מתי הלקוח פתח אותה, מי שוקל, ומי צריך
+          תזכורת — הכל מהטלפון.
         </p>
+
+        {user ? (
+          <Link
+            href="/dashboard"
+            className="mt-4 inline-flex h-12 w-full items-center justify-center rounded-xl bg-brand px-4 text-base font-semibold text-brand-foreground transition-colors hover:bg-brand/90"
+          >
+            לאזור האישי
+          </Link>
+        ) : (
+          <div className="mt-4 flex flex-col gap-2">
+            <Link
+              href="/signup"
+              className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-brand px-4 text-base font-semibold text-brand-foreground transition-colors hover:bg-brand/90"
+            >
+              פתיחת חשבון
+            </Link>
+            <Link
+              href="/login"
+              className="inline-flex h-12 w-full items-center justify-center rounded-xl border border-border bg-surface px-4 text-base font-semibold transition-colors hover:bg-background"
+            >
+              התחברות
+            </Link>
+          </div>
+        )}
       </section>
 
       <SupabaseHealthCard health={health} />
