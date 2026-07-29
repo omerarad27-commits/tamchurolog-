@@ -44,6 +44,8 @@ export type Quote = {
   tax_amount: string | null;
   total: string;
   public_token: string;
+  first_viewed_at: string | null;
+  last_viewed_at: string | null;
   created_at: string;
   updated_at: string;
 };

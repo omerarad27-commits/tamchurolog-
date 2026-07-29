@@ -1,0 +1,176 @@
+import type { Metadata } from "next";
+import Image from "next/image";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
+import { after } from "next/server";
+
+import { clientIpFromHeaders, isLinkPreviewBot } from "@/lib/bots";
+import { formatDate, formatILS, formatQuantity } from "@/lib/format";
+import { normalizeIsraeliPhone } from "@/lib/phone";
+import { loadPublicQuote, recordQuoteView } from "@/lib/public-quote";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/q/[public_token]">): Promise<Metadata> {
+  const { public_token } = await params;
+  const quote = await loadPublicQuote(public_token);
+
+  if (!quote) return { title: "הצעת מחיר" };
+
+  return {
+    title: `הצעת מחיר מ${quote.business.name}`,
+    // The amount is deliberately left out of the preview card: these links get
+    // pasted into group chats, and the price should only appear once the page
+    // is actually opened.
+    description: "לחצו לצפייה בפירוט המלא ולאישור ההצעה.",
+    // A price quote has no business being indexed by a search engine.
+    robots: { index: false, follow: false },
+  };
+}
+
+export default async function PublicQuotePage({
+  params,
+}: PageProps<"/q/[public_token]">) {
+  const { public_token } = await params;
+  const quote = await loadPublicQuote(public_token);
+
+  if (!quote) notFound();
+
+  const requestHeaders = await headers();
+  const userAgent = requestHeaders.get("user-agent");
+
+  // Crawlers still get the page so the WhatsApp preview renders, but their
+  // fetch must never count as the client opening the quote.
+  if (!isLinkPreviewBot(userAgent)) {
+    const ip = clientIpFromHeaders(requestHeaders);
+    after(() => recordQuoteView(quote.id, ip, userAgent));
+  }
+
+  const businessPhone = quote.business.phone
+    ? normalizeIsraeliPhone(quote.business.phone)
+    : null;
+
+  const isClosed = quote.status === "approved" || quote.status === "declined";
+
+  return (
+    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-4 px-4 py-6">
+      {/* ------------------------------------------------------- business */}
+      <header className="flex items-center gap-3">
+        {quote.business.logoUrl ? (
+          <Image
+            src={quote.business.logoUrl}
+            alt={quote.business.name}
+            width={56}
+            height={56}
+            className="h-14 w-14 shrink-0 rounded-tile border border-border bg-surface object-contain"
+          />
+        ) : (
+          <span
+            aria-hidden="true"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-tile bg-brand text-2xl font-bold text-brand-foreground"
+          >
+            {quote.business.name.trim().charAt(0) || "ת"}
+          </span>
+        )}
+
+        <div className="min-w-0">
+          <p className="truncate text-lg font-bold">{quote.business.name}</p>
+          {businessPhone ? (
+            <a
+              href={`tel:${businessPhone.e164}`}
+              className="numeric text-sm text-brand hover:underline"
+            >
+              {businessPhone.local}
+            </a>
+          ) : null}
+        </div>
+      </header>
+
+      {isClosed ? (
+        <p
+          className={
+            "rounded-tile border px-4 py-3 text-sm font-semibold " +
+            (quote.status === "approved"
+              ? "border-success/30 bg-success-soft text-success"
+              : "border-border bg-background text-muted")
+          }
+        >
+          {quote.status === "approved"
+            ? "ההצעה אושרה. תודה!"
+            : "ההצעה סומנה כלא רלוונטית."}
+        </p>
+      ) : null}
+
+      {/* ---------------------------------------------------------- quote */}
+      <section className="overflow-hidden rounded-card border border-border bg-surface shadow-sm">
+        <div className="border-b border-border px-5 py-4">
+          <h1 className="text-xl font-bold">הצעת מחיר</h1>
+          <p className="numeric mt-0.5 text-sm text-muted">
+            #{quote.quoteNumber} · {formatDate(quote.issuedAt)}
+          </p>
+          {quote.clientName ? (
+            <p className="mt-2 text-sm">
+              <span className="text-muted">עבור: </span>
+              <span className="font-semibold">{quote.clientName}</span>
+            </p>
+          ) : null}
+        </div>
+
+        <ul className="divide-y divide-border">
+          {quote.items.map((item) => (
+            <li key={item.id} className="flex items-start gap-3 px-5 py-3.5">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium leading-snug">{item.description}</p>
+                <p className="numeric mt-0.5 text-sm text-muted">
+                  {formatQuantity(Number(item.quantity))} ×{" "}
+                  {formatILS(Number(item.unitPrice))}
+                </p>
+              </div>
+              <span className="numeric shrink-0 font-semibold">
+                {formatILS(Number(item.lineTotal))}
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="flex items-baseline justify-between gap-3 border-t-2 border-foreground/10 bg-background px-5 py-4">
+          <span className="text-base font-semibold">סה״כ לתשלום</span>
+          <span className="numeric text-3xl font-bold">
+            {formatILS(Number(quote.total))}
+          </span>
+        </div>
+      </section>
+
+      {quote.validUntil ? (
+        <p className="text-center text-sm text-muted">
+          ההצעה בתוקף עד{" "}
+          <span className="numeric font-semibold text-foreground">
+            {formatDate(quote.validUntil)}
+          </span>
+        </p>
+      ) : null}
+
+      {quote.notes ? (
+        <section className="rounded-card border border-border bg-surface p-5">
+          <h2 className="text-sm font-semibold text-muted">תנאים והערות</h2>
+          <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed">
+            {quote.notes}
+          </p>
+        </section>
+      ) : null}
+
+      {businessPhone ? (
+        <a
+          href={`tel:${businessPhone.e164}`}
+          className="inline-flex h-control w-full items-center justify-center rounded-control border border-border bg-surface text-base font-semibold transition-colors hover:bg-background"
+        >
+          יש שאלה? חייגו ל{quote.business.name}
+        </a>
+      ) : null}
+
+      <p className="pt-2 text-center text-xs text-muted">
+        נשלח באמצעות תמחורולוג
+      </p>
+    </main>
+  );
+}

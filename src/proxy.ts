@@ -70,7 +70,16 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Everything except static assets and image files.
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    /*
+     * Everything except static assets, image files, and the public quote page.
+     *
+     * /q is excluded deliberately. It is served to clients who have no account,
+     * so refreshing a Supabase session there is pointless work on the critical
+     * path of the one page that has to load fast on a phone. Nothing on /q
+     * relies on the proxy for access control: the page is fetched server side
+     * by exact token, and Phase 6's approve/decline actions are public by
+     * design and validate the token themselves.
+     */
+    "/((?!q/|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };
