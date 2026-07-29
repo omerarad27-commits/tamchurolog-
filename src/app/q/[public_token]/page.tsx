@@ -8,6 +8,7 @@ import { clientIpFromHeaders, isLinkPreviewBot } from "@/lib/bots";
 import { formatDate, formatDateTime, formatILS, formatQuantity } from "@/lib/format";
 import { normalizeIsraeliPhone } from "@/lib/phone";
 import { loadPublicQuote, recordQuoteView } from "@/lib/public-quote";
+import { formatVatRate } from "@/lib/vat";
 
 import { QuoteDecision } from "./quote-decision";
 
@@ -58,6 +59,9 @@ export default async function PublicQuotePage({
     quote.status === "draft" ||
     quote.status === "sent" ||
     quote.status === "viewed";
+
+  const vatRate = Number(quote.vatRate);
+  const hasVat = vatRate > 0;
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-4 px-4 py-6">
@@ -154,12 +158,39 @@ export default async function PublicQuotePage({
           ))}
         </ul>
 
-        <div className="flex items-baseline justify-between gap-3 border-t-2 border-foreground/10 bg-background px-5 py-4">
-          <span className="text-base font-semibold">סה״כ לתשלום</span>
-          <span className="numeric text-3xl font-bold">
-            {formatILS(Number(quote.total))}
-          </span>
-        </div>
+        <dl className="flex flex-col gap-2 border-t-2 border-foreground/10 bg-background px-5 py-4">
+          {hasVat ? (
+            <>
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <dt className="text-muted">סכום ביניים</dt>
+                <dd className="numeric font-medium">
+                  {formatILS(Number(quote.subtotal))}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <dt className="text-muted">מע״מ {formatVatRate(vatRate)}</dt>
+                <dd className="numeric font-medium">
+                  {formatILS(Number(quote.taxAmount ?? 0))}
+                </dd>
+              </div>
+            </>
+          ) : null}
+
+          <div className="flex items-baseline justify-between gap-3">
+            <dt className="text-base font-semibold">סה״כ לתשלום</dt>
+            <dd className="numeric text-3xl font-bold">
+              {formatILS(Number(quote.total))}
+            </dd>
+          </div>
+
+          {/* Stated either way. A client comparing two quotes needs to know
+              whether they are comparing like with like. */}
+          <p className="text-xs text-muted">
+            {hasVat
+              ? `הסכום כולל מע״מ ${formatVatRate(vatRate)}.`
+              : "הסכום אינו כולל מע״מ."}
+          </p>
+        </dl>
       </section>
 
       {isOpen ? (

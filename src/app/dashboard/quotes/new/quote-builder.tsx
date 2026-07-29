@@ -10,6 +10,7 @@ import { inputClasses, TextField } from "@/components/ui/text-field";
 import { formatILS } from "@/lib/format";
 import type { Client } from "@/lib/types";
 import { EMPTY_FORM_STATE } from "@/lib/validation";
+import { formatVatRate, vatAmount, VAT_RATE } from "@/lib/vat";
 
 import { createQuoteAction } from "../actions";
 
@@ -56,6 +57,7 @@ export function QuoteBuilder({
     clients.length === 1 ? clients[0].id : "",
   );
   const [lines, setLines] = useState<DraftLine[]>(() => [emptyLine()]);
+  const [withVat, setWithVat] = useState(true);
   const clientSelectId = useId();
 
   const updateLine = (key: string, patch: Partial<DraftLine>) => {
@@ -82,10 +84,15 @@ export function QuoteBuilder({
     });
   };
 
-  const total = lines.reduce(
-    (sum, line) => sum + toNumber(line.quantity) * toNumber(line.unitPrice),
-    0,
-  );
+  const subtotal =
+    Math.round(
+      lines.reduce(
+        (sum, line) => sum + toNumber(line.quantity) * toNumber(line.unitPrice),
+        0,
+      ) * 100,
+    ) / 100;
+  const vat = withVat ? vatAmount(subtotal, VAT_RATE) : 0;
+  const total = subtotal + vat;
 
   return (
     <form action={formAction} className="flex flex-col gap-5" noValidate>
@@ -243,9 +250,51 @@ export function QuoteBuilder({
       </section>
 
       {/* ---------------------------------------------------------- total */}
-      <section className="flex items-center justify-between rounded-card border border-border bg-surface p-5 shadow-sm">
-        <span className="text-base font-semibold">סה״כ</span>
-        <span className="numeric text-2xl font-bold">{formatILS(total)}</span>
+      <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-5 shadow-sm">
+        {/* A plain checkbox styled as a switch: one tap, and the breakdown
+            below updates immediately so the owner sees the effect before
+            sending anything. */}
+        <label className="flex cursor-pointer items-center justify-between gap-3">
+          <span>
+            <span className="font-semibold">
+              הוספת מע״מ {formatVatRate(VAT_RATE)}
+            </span>
+            <span className="block text-sm text-muted">
+              {withVat
+                ? "המחירים בהצעה יוצגו לפני מע״מ, והמע״מ יתווסף לסכום הסופי."
+                : "ההצעה תישלח ללא מע״מ."}
+            </span>
+          </span>
+
+          <input
+            type="checkbox"
+            name="withVat"
+            checked={withVat}
+            onChange={(event) => setWithVat(event.target.checked)}
+            className="h-6 w-6 shrink-0 accent-[color:var(--brand)]"
+          />
+        </label>
+
+        <dl className="flex flex-col gap-1.5 border-t border-border pt-3 text-sm">
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-muted">סכום ביניים</dt>
+            <dd className="numeric font-medium">{formatILS(subtotal)}</dd>
+          </div>
+
+          {withVat ? (
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-muted">
+                מע״מ {formatVatRate(VAT_RATE)}
+              </dt>
+              <dd className="numeric font-medium">{formatILS(vat)}</dd>
+            </div>
+          ) : null}
+
+          <div className="flex items-baseline justify-between gap-3 border-t border-border pt-2">
+            <dt className="text-base font-semibold">סה״כ</dt>
+            <dd className="numeric text-2xl font-bold">{formatILS(total)}</dd>
+          </div>
+        </dl>
       </section>
 
       {/* --------------------------------------------------------- details */}

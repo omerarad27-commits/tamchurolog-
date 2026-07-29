@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { requireBusiness } from "@/lib/auth";
 import { normalizeIsraeliPhone } from "@/lib/phone";
 import type { FormState } from "@/lib/validation";
+import { VAT_RATE } from "@/lib/vat";
 
 type SubmittedLine = {
   description?: unknown;
@@ -144,7 +145,13 @@ export async function createQuoteAction(
     return { error: "יש לבחור לקוח עבור ההצעה.", success: null };
   }
 
-  /* quote_number, subtotal and total are all assigned by database triggers. */
+  /*
+   * quote_number, subtotal, tax_amount and total are all assigned by database
+   * triggers. Only the rate is our decision, and it is captured now so the
+   * quote keeps the rate it was issued under.
+   */
+  const withVat = formData.get("withVat") === "on";
+
   const { data: quote, error: quoteError } = await supabase
     .from("quotes")
     .insert({
@@ -152,6 +159,7 @@ export async function createQuoteAction(
       client_id: clientId,
       valid_until: validUntilRaw || null,
       notes: notes || null,
+      vat_rate: withVat ? VAT_RATE : 0,
     })
     .select("id")
     .single();

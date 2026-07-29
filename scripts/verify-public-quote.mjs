@@ -366,6 +366,92 @@ async function main() {
   check("anonymous callers cannot invoke the decision function directly",
     Boolean(anonDecision.error),
     anonDecision.error ? anonDecision.error.code : "call unexpectedly succeeded");
+
+  console.log("\n8. VAT");
+
+  const withVat = await admin
+    .from("quotes")
+    .insert({
+      business_id: openQuote.business_id,
+      client_id: openQuote.client_id,
+      status: "sent",
+      sent_at: new Date().toISOString(),
+      vat_rate: 0.18,
+    })
+    .select("id, public_token")
+    .single();
+
+  /* 2 x 150.50 + 1 x 99.99 = 400.99 subtotal */
+  await admin.from("quote_line_items").insert([
+    { quote_id: withVat.data.id, description: "Labour", quantity: 2, unit_price: 150.5, sort_order: 0 },
+    { quote_id: withVat.data.id, description: "Parts", quantity: 1, unit_price: 99.99, sort_order: 1 },
+  ]);
+
+  const readMoney = async (id) => {
+    const { data } = await admin
+      .from("quotes")
+      .select("subtotal, tax_amount, total, vat_rate")
+      .eq("id", id)
+      .single();
+    return data;
+  };
+
+  /* 400.99 x 0.18 = 72.1782, which must round to 72.18, giving 473.17 */
+  const vatMoney = await readMoney(withVat.data.id);
+  check("subtotal excludes VAT", Number(vatMoney.subtotal) === 400.99,
+    String(vatMoney.subtotal));
+  check("VAT is 18% of the subtotal, rounded to agorot",
+    Number(vatMoney.tax_amount) === 72.18, String(vatMoney.tax_amount));
+  check("total is subtotal plus VAT", Number(vatMoney.total) === 473.17,
+    String(vatMoney.total));
+
+  const vatPage = await visit(BROWSER_UA, `/q/${withVat.data.public_token}`);
+  check("the public page shows the VAT breakdown",
+    vatPage.body.includes("400.99") &&
+      vatPage.body.includes("72.18") &&
+      vatPage.body.includes("473.17"));
+  check("the public page states that VAT is included",
+    vatPage.body.includes("כולל מע"));
+
+  /* Adding a line must move VAT and total together, not just the subtotal. */
+  await admin.from("quote_line_items").insert({
+    quote_id: withVat.data.id, description: "Extra", quantity: 1, unit_price: 99.01, sort_order: 2,
+  });
+  const afterAdd = await readMoney(withVat.data.id);
+  check("adding a line recomputes VAT as well as the subtotal",
+    Number(afterAdd.subtotal) === 500 && Number(afterAdd.tax_amount) === 90 &&
+      Number(afterAdd.total) === 590,
+    `${afterAdd.subtotal} / ${afterAdd.tax_amount} / ${afterAdd.total}`);
+
+  /* Turning VAT off must recompute, not leave a stale tax_amount behind. */
+  await admin.from("quotes").update({ vat_rate: 0 }).eq("id", withVat.data.id);
+  const afterOff = await readMoney(withVat.data.id);
+  check("clearing the rate zeroes the VAT and the total follows",
+    Number(afterOff.tax_amount) === 0 && Number(afterOff.total) === 500,
+    `${afterOff.tax_amount} / ${afterOff.total}`);
+
+  const noVatPage = await visit(BROWSER_UA, `/q/${withVat.data.public_token}`);
+  check("with no VAT the page says so and shows no VAT line",
+    noVatPage.body.includes("אינו כולל מע") && !noVatPage.body.includes("90.00"));
+
+  /* A quote created without VAT must never acquire one. */
+  const noVat = await admin
+    .from("quotes")
+    .insert({
+      business_id: openQuote.business_id,
+      client_id: openQuote.client_id,
+      status: "draft",
+    })
+    .select("id")
+    .single();
+  await admin.from("quote_line_items").insert({
+    quote_id: noVat.data.id, description: "Work", quantity: 1, unit_price: 1000, sort_order: 0,
+  });
+  const plain = await readMoney(noVat.data.id);
+  check("a quote defaults to no VAT",
+    Number(plain.vat_rate) === 0 && Number(plain.tax_amount) === 0 &&
+      Number(plain.total) === 1000,
+    `${plain.vat_rate} / ${plain.tax_amount} / ${plain.total}`);
 }
 
 let exitCode = 0;

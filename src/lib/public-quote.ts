@@ -23,6 +23,9 @@ export type PublicQuote = {
   issuedAt: string;
   validUntil: string | null;
   notes: string | null;
+  subtotal: string;
+  taxAmount: string | null;
+  vatRate: string;
   total: string;
   decisionName: string | null;
   decidedAt: string | null;
@@ -51,7 +54,7 @@ export async function loadPublicQuote(
   const { data: quote } = await supabase
     .from("quotes")
     .select(
-      "id, business_id, client_id, quote_number, status, issued_at, valid_until, notes, total, decision_signature_name, decided_at",
+      "id, business_id, client_id, quote_number, status, issued_at, valid_until, notes, subtotal, tax_amount, vat_rate, total, decision_signature_name, decided_at",
     )
     .eq("public_token", token)
     .maybeSingle();
@@ -84,6 +87,9 @@ export async function loadPublicQuote(
     issuedAt: quote.issued_at,
     validUntil: quote.valid_until,
     notes: quote.notes,
+    subtotal: quote.subtotal,
+    taxAmount: quote.tax_amount,
+    vatRate: quote.vat_rate,
     total: quote.total,
     decisionName: quote.decision_signature_name,
     decidedAt: quote.decided_at,

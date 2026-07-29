@@ -8,6 +8,7 @@ import { publicEnv } from "@/lib/env";
 import { formatDate, formatDateTime, formatILS, formatQuantity } from "@/lib/format";
 import { formatPhoneForDisplay } from "@/lib/phone";
 import type { Client, Quote, QuoteLineItem } from "@/lib/types";
+import { formatVatRate } from "@/lib/vat";
 import { buildQuoteMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 
 import { SendQuote } from "./send-quote";
@@ -25,7 +26,7 @@ export default async function QuotePage({
   const { data: quoteRow } = await supabase
     .from("quotes")
     .select(
-      "id, business_id, client_id, quote_number, status, issued_at, sent_at, valid_until, notes, subtotal, tax_amount, total, public_token, first_viewed_at, last_viewed_at, decision_signature_name, decided_at, decision_reason, created_at, updated_at",
+      "id, business_id, client_id, quote_number, status, issued_at, sent_at, valid_until, notes, subtotal, tax_amount, total, vat_rate, public_token, first_viewed_at, last_viewed_at, decision_signature_name, decided_at, decision_reason, created_at, updated_at",
     )
     .eq("id", id)
     .eq("business_id", business.id)
@@ -50,6 +51,8 @@ export default async function QuotePage({
   const client = clientRow as Client | null;
   const items = (itemRows ?? []) as QuoteLineItem[];
   const publicUrl = `${publicEnv.appUrl}/q/${quote.public_token}`;
+  const vatRate = Number(quote.vat_rate);
+  const hasVat = vatRate > 0;
 
   const whatsapp = buildWhatsAppUrl(
     client?.phone ?? null,
@@ -122,12 +125,35 @@ export default async function QuotePage({
           ))}
         </ul>
 
-        <div className="flex items-center justify-between border-t border-border px-5 py-4">
-          <span className="font-semibold">סה״כ</span>
-          <span className="numeric text-2xl font-bold">
-            {formatILS(Number(quote.total))}
-          </span>
-        </div>
+        <dl className="flex flex-col gap-1.5 border-t border-border px-5 py-4 text-sm">
+          {hasVat ? (
+            <>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-muted">סכום ביניים</dt>
+                <dd className="numeric font-medium">
+                  {formatILS(Number(quote.subtotal))}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-muted">מע״מ {formatVatRate(vatRate)}</dt>
+                <dd className="numeric font-medium">
+                  {formatILS(Number(quote.tax_amount ?? 0))}
+                </dd>
+              </div>
+            </>
+          ) : null}
+
+          <div className="flex items-baseline justify-between gap-3 border-t border-border pt-2">
+            <dt className="font-semibold">סה״כ</dt>
+            <dd className="numeric text-2xl font-bold">
+              {formatILS(Number(quote.total))}
+            </dd>
+          </div>
+
+          {!hasVat ? (
+            <p className="pt-1 text-xs text-muted">ההצעה אינה כוללת מע״מ.</p>
+          ) : null}
+        </dl>
       </section>
 
       {quote.notes ? (

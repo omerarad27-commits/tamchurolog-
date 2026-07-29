@@ -43,6 +43,12 @@ export type Quote = {
   subtotal: string;
   tax_amount: string | null;
   total: string;
+  /**
+   * The VAT rate this quote was created with, e.g. "0.1800". Zero means the
+   * quote was issued without VAT. Stored per quote rather than read from a
+   * constant, so a change in the law never rewrites an old document.
+   */
+  vat_rate: string;
   public_token: string;
   first_viewed_at: string | null;
   last_viewed_at: string | null;
