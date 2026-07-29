@@ -11,7 +11,8 @@
     "verify:rls": "node --env-file=.env.local scripts/verify-rls.mjs",
     "verify:public": "node --env-file=.env.local scripts/verify-public-quote.mjs",
     "seed:demo": "node --env-file=.env.local scripts/seed-demo-quotes.mjs",
-    "accounts": "node --env-file=.env.local scripts/list-accounts.mjs"
+    "accounts": "node --env-file=.env.local scripts/list-accounts.mjs",
+    "stats": "node --env-file=.env.local scripts/show-stats.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",

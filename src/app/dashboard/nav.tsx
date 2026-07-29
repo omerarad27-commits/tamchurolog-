@@ -11,6 +11,7 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { href: "/dashboard", label: "הצעות" },
   { href: "/dashboard/clients", label: "לקוחות" },
+  { href: "/dashboard/stats", label: "סיכום" },
   { href: "/dashboard/settings", label: "הגדרות" },
 ] as const;
 
