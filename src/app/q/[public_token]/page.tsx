@@ -162,7 +162,7 @@ export default async function PublicQuotePage({
       {businessPhone ? (
         <a
           href={`tel:${businessPhone.e164}`}
-          className="inline-flex h-control w-full items-center justify-center rounded-control border border-border bg-surface text-base font-semibold transition-colors hover:bg-background"
+          className="print-hide inline-flex h-control w-full items-center justify-center rounded-control border border-border bg-surface text-base font-semibold transition-colors hover:bg-background"
         >
           יש שאלה? חייגו ל{quote.business.name}
         </a>

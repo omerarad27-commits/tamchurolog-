@@ -1,0 +1,83 @@
+import { normalizeIsraeliPhone } from "@/lib/phone";
+
+/*
+ * WhatsApp deep links.
+ *
+ * Built once here and reused by both the initial send (Phase 5) and the
+ * follow-up reminder (Phase 7), so the two can never drift apart in how they
+ * format a number or escape a message.
+ *
+ * wa.me wants the number as digits only in international form, with no plus
+ * and no punctuation: 972541234567. normalizeIsraeliPhone does that conversion
+ * and refuses anything that is not a valid Israeli number, so a malformed
+ * number produces a link with no recipient rather than a link to a wrong one.
+ */
+
+export type WhatsAppTarget = {
+  url: string;
+  /** False when we had no usable number and WhatsApp will ask who to send to. */
+  hasRecipient: boolean;
+};
+
+export function buildWhatsAppUrl(
+  phone: string | null,
+  message: string,
+): WhatsAppTarget {
+  const normalized = phone ? normalizeIsraeliPhone(phone) : null;
+  const text = encodeURIComponent(message);
+
+  if (!normalized) {
+    // Still useful: WhatsApp opens with the message ready and lets the owner
+    // pick the contact by hand.
+    return { url: `https://wa.me/?text=${text}`, hasRecipient: false };
+  }
+
+  return { url: `https://wa.me/${normalized.wa}?text=${text}`, hasRecipient: true };
+}
+
+/** First name only — a full legal name in an opening line reads like a bill. */
+function firstName(fullName: string): string {
+  return fullName.trim().split(/\s+/)[0] ?? "";
+}
+
+export function buildQuoteMessage({
+  businessName,
+  clientName,
+  quoteUrl,
+}: {
+  businessName: string;
+  clientName: string;
+  quoteUrl: string;
+}): string {
+  const greeting = clientName ? `היי ${firstName(clientName)},` : "היי,";
+
+  return [
+    `${greeting} כאן ${businessName}.`,
+    "",
+    "מצורפת הצעת המחיר שהכנתי עבורך:",
+    quoteUrl,
+    "",
+    "אפשר לאשר אותה ישירות מהקישור. אשמח לשמוע מה דעתך.",
+  ].join("\n");
+}
+
+export function buildReminderMessage({
+  businessName,
+  clientName,
+  quoteUrl,
+}: {
+  businessName: string;
+  clientName: string;
+  quoteUrl: string;
+}): string {
+  const greeting = clientName ? `היי ${firstName(clientName)},` : "היי,";
+
+  return [
+    `${greeting} רק תזכורת קצרה לגבי הצעת המחיר ששלחתי:`,
+    quoteUrl,
+    "",
+    "אשמח לדעת אם זה מתאים לך, ואם עלו שאלות אני כאן.",
+    "",
+    businessName,
+  ].join("\n");
+}

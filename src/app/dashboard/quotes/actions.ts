@@ -179,3 +179,24 @@ export async function createQuoteAction(
   revalidatePath("/dashboard");
   redirect(`/dashboard/quotes/${quote.id}`);
 }
+
+/**
+ * Marks a quote as sent. Called the moment the owner taps the WhatsApp button.
+ *
+ * Only ever moves a draft forward. A quote that is already sent, viewed,
+ * approved or declined is left alone, so re-sharing a link — or sending a
+ * Phase 7 reminder — can never reset the history or overwrite sent_at.
+ */
+export async function markQuoteSentAction(quoteId: string): Promise<void> {
+  const { supabase, business } = await requireBusiness();
+
+  await supabase
+    .from("quotes")
+    .update({ status: "sent", sent_at: new Date().toISOString() })
+    .eq("id", quoteId)
+    .eq("business_id", business.id)
+    .eq("status", "draft");
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/quotes/${quoteId}`);
+}

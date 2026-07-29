@@ -62,3 +62,50 @@ body {
   direction: ltr;
   unicode-bidi: isolate;
 }
+
+/*
+  Print. Lets a client do Print > Save as PDF from any browser and end up with
+  something worth filing, without us generating PDFs server side.
+
+  Interactive things carry .print-hide: a "call us" button is meaningless on
+  paper, and so is an approve button on a document that is already printed.
+*/
+@media print {
+  :root {
+    --background: #ffffff;
+    --surface: #ffffff;
+    --foreground: #000000;
+    --muted: #444444;
+    --border: #bbbbbb;
+  }
+
+  .print-hide {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  /* Flat on paper: shadows turn into grey smudges on most printers. */
+  section,
+  header {
+    box-shadow: none !important;
+  }
+
+  /* Never split a line item or a card across two pages. */
+  section,
+  li {
+    break-inside: avoid;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}

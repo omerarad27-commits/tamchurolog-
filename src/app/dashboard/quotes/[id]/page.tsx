@@ -8,6 +8,9 @@ import { publicEnv } from "@/lib/env";
 import { formatDate, formatDateTime, formatILS, formatQuantity } from "@/lib/format";
 import { formatPhoneForDisplay } from "@/lib/phone";
 import type { Client, Quote, QuoteLineItem } from "@/lib/types";
+import { buildQuoteMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
+
+import { SendQuote } from "./send-quote";
 
 export const metadata: Metadata = {
   title: "הצעת מחיר | תמחורולוג",
@@ -47,6 +50,15 @@ export default async function QuotePage({
   const client = clientRow as Client | null;
   const items = (itemRows ?? []) as QuoteLineItem[];
   const publicUrl = `${publicEnv.appUrl}/q/${quote.public_token}`;
+
+  const whatsapp = buildWhatsAppUrl(
+    client?.phone ?? null,
+    buildQuoteMessage({
+      businessName: business.name,
+      clientName: client?.full_name ?? "",
+      quoteUrl: publicUrl,
+    }),
+  );
 
   return (
     <div className="flex flex-col gap-5">
@@ -127,6 +139,13 @@ export default async function QuotePage({
         </section>
       ) : null}
 
+      <SendQuote
+        quoteId={quote.id}
+        url={whatsapp.url}
+        hasRecipient={whatsapp.hasRecipient}
+        alreadySent={quote.status !== "draft"}
+      />
+
       <section className="rounded-card border border-border bg-surface p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-muted">הקישור ללקוח</h2>
         <p
@@ -146,6 +165,12 @@ export default async function QuotePage({
         </a>
 
         <dl className="mt-4 flex flex-col gap-1.5 text-sm">
+          <div className="flex justify-between gap-3">
+            <dt className="text-muted">נשלחה</dt>
+            <dd className="numeric font-medium">
+              {quote.sent_at ? formatDateTime(quote.sent_at) : "טרם נשלחה"}
+            </dd>
+          </div>
           <div className="flex justify-between gap-3">
             <dt className="text-muted">נצפתה לראשונה</dt>
             <dd className="numeric font-medium">
