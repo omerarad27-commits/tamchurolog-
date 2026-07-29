@@ -20,12 +20,15 @@ const nextConfig: NextConfig = {
        * framework before our own validation could run, and the owner saw a
        * generic failure instead of a useful message.
        *
-       * Set above 2MB on purpose: the limit counts the raw multipart body,
-       * including boundaries and part headers, so a file of exactly 2MB
-       * arrives slightly larger. The headroom means our Hebrew "file too big"
-       * message is what an oversized upload actually hits.
+       * Set above the 3.5MB we accept on purpose: the limit counts the raw
+       * multipart body, including boundaries and part headers, so a file of
+       * exactly 3.5MB arrives slightly larger. The headroom means our Hebrew
+       * "file too big" message is what an oversized upload actually hits.
+       *
+       * Do not raise this much further. Vercel rejects any request body over
+       * 4.5MB with a 413 before our code ever runs.
        */
-      bodySizeLimit: "3mb",
+      bodySizeLimit: "4mb",
     },
   },
 };

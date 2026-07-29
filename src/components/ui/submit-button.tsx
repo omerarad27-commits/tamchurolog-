@@ -16,17 +16,29 @@ export function SubmitButton({
   pendingLabel,
   variant = "primary",
   size,
+  disabled = false,
+  disabledLabel,
 }: {
   children: React.ReactNode;
   pendingLabel: string;
   variant?: "primary" | "secondary" | "danger";
   size?: "md" | "sm";
+  /** For work that must finish before submitting, e.g. resizing an image. */
+  disabled?: boolean;
+  disabledLabel?: string;
 }) {
   const { pending } = useFormStatus();
+  const busy = pending || disabled;
 
   return (
-    <Button type="submit" variant={variant} size={size} disabled={pending} aria-busy={pending}>
-      {pending ? pendingLabel : children}
+    <Button
+      type="submit"
+      variant={variant}
+      size={size}
+      disabled={busy}
+      aria-busy={busy}
+    >
+      {pending ? pendingLabel : disabled ? (disabledLabel ?? pendingLabel) : children}
     </Button>
   );
 }

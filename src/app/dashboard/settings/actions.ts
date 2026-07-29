@@ -6,7 +6,13 @@ import { requireBusiness } from "@/lib/auth";
 import { normalizeIsraeliPhone } from "@/lib/phone";
 import type { FormState } from "@/lib/validation";
 
-const LOGO_MAX_BYTES = 2 * 1024 * 1024;
+/*
+ * The browser shrinks logos before upload, so a file should arrive well under
+ * 200KB. This ceiling only catches what that path cannot handle: an SVG, or a
+ * browser too old for canvas encoding. Kept below Vercel's hard 4.5MB request
+ * body limit with room for multipart overhead.
+ */
+const LOGO_MAX_BYTES = 3.5 * 1024 * 1024;
 
 const LOGO_EXTENSIONS: Record<string, string> = {
   "image/png": "png",
@@ -70,7 +76,7 @@ export async function updateBusinessAction(
       };
     }
     if (logo.size > LOGO_MAX_BYTES) {
-      return { error: "הקובץ גדול מדי. הגודל המרבי הוא 2MB.", success: null };
+      return { error: "הקובץ גדול מדי. הגודל המרבי הוא 3.5MB.", success: null };
     }
 
     // Timestamped filename so a replaced logo is never served from cache.
