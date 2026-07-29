@@ -9,7 +9,9 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "verify:rls": "node --env-file=.env.local scripts/verify-rls.mjs",
-    "verify:public": "node --env-file=.env.local scripts/verify-public-quote.mjs"
+    "verify:public": "node --env-file=.env.local scripts/verify-public-quote.mjs",
+    "seed:demo": "node --env-file=.env.local scripts/seed-demo-quotes.mjs",
+    "accounts": "node --env-file=.env.local scripts/list-accounts.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",

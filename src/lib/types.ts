@@ -50,6 +50,7 @@ export type Quote = {
   decided_at: string | null;
   decision_ip: string | null;
   decision_reason: string | null;
+  reminded_at: string | null;
   created_at: string;
   updated_at: string;
 };

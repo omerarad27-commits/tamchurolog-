@@ -200,3 +200,24 @@ export async function markQuoteSentAction(quoteId: string): Promise<void> {
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/quotes/${quoteId}`);
 }
+
+/**
+ * Records that a reminder was sent, which restarts the follow-up clock.
+ *
+ * Never touches status or sent_at: a reminder is a nudge about an existing
+ * send, not a new one. Only applies while the quote is still awaiting a
+ * decision, so a reminder tapped on an already-approved quote is a no-op.
+ */
+export async function markQuoteRemindedAction(quoteId: string): Promise<void> {
+  const { supabase, business } = await requireBusiness();
+
+  await supabase
+    .from("quotes")
+    .update({ reminded_at: new Date().toISOString() })
+    .eq("id", quoteId)
+    .eq("business_id", business.id)
+    .in("status", ["sent", "viewed"]);
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/quotes/${quoteId}`);
+}
