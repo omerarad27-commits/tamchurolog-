@@ -48,8 +48,19 @@ export type Quote = {
   last_viewed_at: string | null;
   decision_signature_name: string | null;
   decided_at: string | null;
-  decision_ip: string | null;
   decision_reason: string | null;
+  /*
+   * decision_ip exists in the database and is deliberately absent here.
+   *
+   * It is captured because it strengthens the record of who accepted a quote,
+   * but the owner has no use for it: an IP address identifies nobody and helps
+   * close no deal. Showing a client's IP to the tradesperson is an exposure of
+   * personal data with no purpose behind it, so it is never selected and never
+   * rendered. Leaving it out of this type makes the compiler enforce that
+   * rather than relying on whoever edits the page next.
+   *
+   * If a real dispute ever needs it, it is one query away in the database.
+   */
   reminded_at: string | null;
   created_at: string;
   updated_at: string;

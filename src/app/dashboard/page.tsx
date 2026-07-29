@@ -57,7 +57,7 @@ export default async function DashboardPage({
   const { data, error } = await supabase
     .from("quotes")
     .select(
-      "id, business_id, client_id, quote_number, status, issued_at, sent_at, valid_until, notes, subtotal, tax_amount, total, public_token, first_viewed_at, last_viewed_at, decision_signature_name, decided_at, decision_ip, decision_reason, reminded_at, created_at, updated_at, clients (id, full_name, phone)",
+      "id, business_id, client_id, quote_number, status, issued_at, sent_at, valid_until, notes, subtotal, tax_amount, total, public_token, first_viewed_at, last_viewed_at, decision_signature_name, decided_at, decision_reason, reminded_at, created_at, updated_at, clients (id, full_name, phone)",
     )
     .eq("business_id", business.id)
     .order("quote_number", { ascending: false });

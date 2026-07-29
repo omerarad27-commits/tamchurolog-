@@ -25,7 +25,7 @@ export default async function QuotePage({
   const { data: quoteRow } = await supabase
     .from("quotes")
     .select(
-      "id, business_id, client_id, quote_number, status, issued_at, sent_at, valid_until, notes, subtotal, tax_amount, total, public_token, first_viewed_at, last_viewed_at, decision_signature_name, decided_at, decision_ip, decision_reason, created_at, updated_at",
+      "id, business_id, client_id, quote_number, status, issued_at, sent_at, valid_until, notes, subtotal, tax_amount, total, public_token, first_viewed_at, last_viewed_at, decision_signature_name, decided_at, decision_reason, created_at, updated_at",
     )
     .eq("id", id)
     .eq("business_id", business.id)
@@ -155,12 +155,6 @@ export default async function QuotePage({
                 {formatDateTime(quote.decided_at)}
               </dd>
             </div>
-            {quote.decision_ip ? (
-              <div className="flex justify-between gap-3">
-                <dt className="text-muted">כתובת IP</dt>
-                <dd className="numeric font-medium">{quote.decision_ip}</dd>
-              </div>
-            ) : null}
           </dl>
         </section>
       ) : null}
