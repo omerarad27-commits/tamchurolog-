@@ -5,9 +5,11 @@ import { notFound } from "next/navigation";
 import { after } from "next/server";
 
 import { clientIpFromHeaders, isLinkPreviewBot } from "@/lib/bots";
-import { formatDate, formatILS, formatQuantity } from "@/lib/format";
+import { formatDate, formatDateTime, formatILS, formatQuantity } from "@/lib/format";
 import { normalizeIsraeliPhone } from "@/lib/phone";
 import { loadPublicQuote, recordQuoteView } from "@/lib/public-quote";
+
+import { QuoteDecision } from "./quote-decision";
 
 export async function generateMetadata({
   params,
@@ -50,7 +52,12 @@ export default async function PublicQuotePage({
     ? normalizeIsraeliPhone(quote.business.phone)
     : null;
 
-  const isClosed = quote.status === "approved" || quote.status === "declined";
+  // Once a client has decided, the buttons are gone for good. The final state
+  // is shown instead, so a revisit cannot un-approve anything.
+  const isOpen =
+    quote.status === "draft" ||
+    quote.status === "sent" ||
+    quote.status === "viewed";
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-4 px-4 py-6">
@@ -86,19 +93,33 @@ export default async function PublicQuotePage({
         </div>
       </header>
 
-      {isClosed ? (
-        <p
-          className={
-            "rounded-tile border px-4 py-3 text-sm font-semibold " +
-            (quote.status === "approved"
-              ? "border-success/30 bg-success-soft text-success"
-              : "border-border bg-background text-muted")
-          }
-        >
-          {quote.status === "approved"
-            ? "ההצעה אושרה. תודה!"
-            : "ההצעה סומנה כלא רלוונטית."}
-        </p>
+      {quote.status === "approved" ? (
+        <section className="rounded-card border border-success/30 bg-success-soft p-5">
+          <h2 className="font-bold text-success">ההצעה אושרה</h2>
+          <p className="mt-1 text-sm leading-relaxed">
+            תודה! {quote.business.name} ייצור איתך קשר בקרוב.
+          </p>
+          {quote.decisionName && quote.decidedAt ? (
+            <p className="mt-2 text-xs text-muted">
+              אושר על ידי{" "}
+              <span className="font-semibold text-foreground">
+                {quote.decisionName}
+              </span>{" "}
+              בתאריך{" "}
+              <span className="numeric">{formatDateTime(quote.decidedAt)}</span>
+            </p>
+          ) : null}
+        </section>
+      ) : null}
+
+      {quote.status === "declined" ? (
+        <section className="rounded-card border border-border bg-background p-5">
+          <h2 className="font-bold">תודה על התשובה</h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted">
+            נרשם אצלנו שההצעה אינה רלוונטית. אם תשנה/י את דעתך, אפשר לפנות ישירות
+            ל{quote.business.name}.
+          </p>
+        </section>
       ) : null}
 
       {/* ---------------------------------------------------------- quote */}
@@ -140,6 +161,13 @@ export default async function PublicQuotePage({
           </span>
         </div>
       </section>
+
+      {isOpen ? (
+        <QuoteDecision
+          token={public_token}
+          businessName={quote.business.name}
+        />
+      ) : null}
 
       {quote.validUntil ? (
         <p className="text-center text-sm text-muted">

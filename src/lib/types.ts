@@ -46,6 +46,10 @@ export type Quote = {
   public_token: string;
   first_viewed_at: string | null;
   last_viewed_at: string | null;
+  decision_signature_name: string | null;
+  decided_at: string | null;
+  decision_ip: string | null;
+  decision_reason: string | null;
   created_at: string;
   updated_at: string;
 };

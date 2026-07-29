@@ -24,6 +24,8 @@ export type PublicQuote = {
   validUntil: string | null;
   notes: string | null;
   total: string;
+  decisionName: string | null;
+  decidedAt: string | null;
   business: {
     name: string;
     phone: string | null;
@@ -49,7 +51,7 @@ export async function loadPublicQuote(
   const { data: quote } = await supabase
     .from("quotes")
     .select(
-      "id, business_id, client_id, quote_number, status, issued_at, valid_until, notes, total",
+      "id, business_id, client_id, quote_number, status, issued_at, valid_until, notes, total, decision_signature_name, decided_at",
     )
     .eq("public_token", token)
     .maybeSingle();
@@ -83,6 +85,8 @@ export async function loadPublicQuote(
     validUntil: quote.valid_until,
     notes: quote.notes,
     total: quote.total,
+    decisionName: quote.decision_signature_name,
+    decidedAt: quote.decided_at,
     business: {
       name: business?.name ?? "",
       phone: business?.phone ?? null,

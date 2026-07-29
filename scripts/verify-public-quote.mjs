@@ -217,6 +217,155 @@ async function main() {
   check("anonymous callers cannot read view events",
     (anonEvents.data ?? []).length === 0,
     `rows: ${(anonEvents.data ?? []).length}`);
+
+  console.log("\n7. Approve and decline");
+
+  /* Fresh quote so the earlier one being approved does not interfere. */
+  const { data: openQuote } = await admin
+    .from("quotes")
+    .select("business_id, client_id")
+    .eq("id", quoteId)
+    .single();
+
+  const makeOpenQuote = async () => {
+    const { data } = await admin
+      .from("quotes")
+      .insert({
+        business_id: openQuote.business_id,
+        client_id: openQuote.client_id,
+        status: "viewed",
+      })
+      .select("id, public_token")
+      .single();
+    await admin.from("quote_line_items").insert({
+      quote_id: data.id, description: "Work", quantity: 1, unit_price: 500, sort_order: 0,
+    });
+    return data;
+  };
+
+  const toApprove = await makeOpenQuote();
+
+  const beforeDecision = await visit(BROWSER_UA, `/q/${toApprove.public_token}`);
+  check("an open quote shows the approve and decline buttons",
+    beforeDecision.body.includes("אישור ההצעה") &&
+      beforeDecision.body.includes("לא מעוניין"));
+  check("the disclaimer about not being a party to the deal is shown",
+    beforeDecision.body.includes("אינו צד להתקשרות"));
+
+  const approveResult = await admin.rpc("record_quote_decision", {
+    p_token: toApprove.public_token,
+    p_decision: "approved",
+    p_signature_name: "  Dana Levi  ",
+    p_ip: "203.0.113.9",
+    p_reason: "",
+  });
+  check("approving an open quote succeeds", approveResult.data === "ok",
+    String(approveResult.data ?? approveResult.error?.message));
+
+  const { data: approved } = await admin
+    .from("quotes")
+    .select("status, decision_signature_name, decided_at, decision_ip, decision_reason")
+    .eq("id", toApprove.id)
+    .single();
+  check("status is approved", approved.status === "approved", approved.status);
+  check("the typed name is stored, trimmed",
+    approved.decision_signature_name === "Dana Levi",
+    JSON.stringify(approved.decision_signature_name));
+  check("decided_at and the IP are captured",
+    Boolean(approved.decided_at) && approved.decision_ip === "203.0.113.9");
+  check("no decline reason leaked into an approval",
+    approved.decision_reason === null);
+
+  const afterDecision = await visit(BROWSER_UA, `/q/${toApprove.public_token}`);
+  check("the action buttons are gone after approval",
+    !afterDecision.body.includes("לא מעוניין"));
+  check("the page shows the approval and who gave it",
+    afterDecision.body.includes("ההצעה אושרה") &&
+      afterDecision.body.includes("Dana Levi"));
+
+  /* The important one: a replay must not overwrite the first decision. */
+  const replay = await admin.rpc("record_quote_decision", {
+    p_token: toApprove.public_token,
+    p_decision: "declined",
+    p_signature_name: "",
+    p_ip: "203.0.113.99",
+    p_reason: "changed my mind",
+  });
+  const { data: afterReplay } = await admin
+    .from("quotes")
+    .select("status, decided_at, decision_signature_name")
+    .eq("id", toApprove.id)
+    .single();
+  check("a second decision on the same quote is refused",
+    replay.data === "unchanged", String(replay.data));
+  check("the original decision is untouched by the replay",
+    afterReplay.status === "approved" &&
+      afterReplay.decided_at === approved.decided_at &&
+      afterReplay.decision_signature_name === "Dana Levi");
+
+  /* Decline path, on its own quote. */
+  const toDecline = await makeOpenQuote();
+  const declineResult = await admin.rpc("record_quote_decision", {
+    p_token: toDecline.public_token,
+    p_decision: "declined",
+    p_signature_name: "",
+    p_ip: "203.0.113.10",
+    p_reason: "המחיר גבוה מדי",
+  });
+  const { data: declined } = await admin
+    .from("quotes")
+    .select("status, decision_reason, decision_signature_name")
+    .eq("id", toDecline.id)
+    .single();
+  check("declining works", declineResult.data === "ok", String(declineResult.data));
+  check("the reason is stored", declined.decision_reason === "המחיר גבוה מדי",
+    String(declined.decision_reason));
+  check("no signature name is stored for a decline",
+    declined.decision_signature_name === null);
+
+  /* Input guards. */
+  const noName = await makeOpenQuote();
+  const missingName = await admin.rpc("record_quote_decision", {
+    p_token: noName.public_token,
+    p_decision: "approved",
+    p_signature_name: "   ",
+    p_ip: null,
+    p_reason: "",
+  });
+  check("approving with a blank name is refused",
+    missingName.data === "missing_name", String(missingName.data));
+
+  const bogus = await admin.rpc("record_quote_decision", {
+    p_token: noName.public_token,
+    p_decision: "cancelled",
+    p_signature_name: "X",
+    p_ip: null,
+    p_reason: "",
+  });
+  check("an unknown decision value is refused", bogus.data === "invalid",
+    String(bogus.data));
+
+  const wrongTokenDecision = await admin.rpc("record_quote_decision", {
+    p_token: "b".repeat(32),
+    p_decision: "approved",
+    p_signature_name: "Someone",
+    p_ip: null,
+    p_reason: "",
+  });
+  check("a decision on an unknown token changes nothing",
+    wrongTokenDecision.data === "unchanged", String(wrongTokenDecision.data));
+
+  /* And the function itself must not be reachable without the service key. */
+  const anonDecision = await anonClient.rpc("record_quote_decision", {
+    p_token: noName.public_token,
+    p_decision: "approved",
+    p_signature_name: "Attacker",
+    p_ip: null,
+    p_reason: "",
+  });
+  check("anonymous callers cannot invoke the decision function directly",
+    Boolean(anonDecision.error),
+    anonDecision.error ? anonDecision.error.code : "call unexpectedly succeeded");
 }
 
 let exitCode = 0;

@@ -25,7 +25,7 @@ export default async function QuotePage({
   const { data: quoteRow } = await supabase
     .from("quotes")
     .select(
-      "id, business_id, client_id, quote_number, status, issued_at, sent_at, valid_until, notes, subtotal, tax_amount, total, public_token, first_viewed_at, last_viewed_at, created_at, updated_at",
+      "id, business_id, client_id, quote_number, status, issued_at, sent_at, valid_until, notes, subtotal, tax_amount, total, public_token, first_viewed_at, last_viewed_at, decision_signature_name, decided_at, decision_ip, decision_reason, created_at, updated_at",
     )
     .eq("id", id)
     .eq("business_id", business.id)
@@ -136,6 +136,52 @@ export default async function QuotePage({
           <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">
             {quote.notes}
           </p>
+        </section>
+      ) : null}
+
+      {quote.status === "approved" ? (
+        <section className="rounded-card border border-success/30 bg-success-soft p-5">
+          <h2 className="font-bold text-success">הלקוח אישר את ההצעה</h2>
+          <dl className="mt-2 flex flex-col gap-1.5 text-sm">
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted">אושר על ידי</dt>
+              <dd className="font-semibold">
+                {quote.decision_signature_name ?? "—"}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted">מועד האישור</dt>
+              <dd className="numeric font-medium">
+                {formatDateTime(quote.decided_at)}
+              </dd>
+            </div>
+            {quote.decision_ip ? (
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted">כתובת IP</dt>
+                <dd className="numeric font-medium">{quote.decision_ip}</dd>
+              </div>
+            ) : null}
+          </dl>
+        </section>
+      ) : null}
+
+      {quote.status === "declined" ? (
+        <section className="rounded-card border border-border bg-surface p-5 shadow-sm">
+          <h2 className="font-bold">הלקוח דחה את ההצעה</h2>
+          <dl className="mt-2 flex flex-col gap-1.5 text-sm">
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted">מועד</dt>
+              <dd className="numeric font-medium">
+                {formatDateTime(quote.decided_at)}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted">סיבה</dt>
+              <dd className="font-medium">
+                {quote.decision_reason ?? "לא צוינה"}
+              </dd>
+            </div>
+          </dl>
         </section>
       ) : null}
 
