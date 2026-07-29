@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -13,11 +13,46 @@ import { EMPTY_FORM_STATE } from "@/lib/validation";
 
 import { updateBusinessAction } from "./actions";
 
+const LOGO_MAX_BYTES = 2 * 1024 * 1024;
+const LOGO_TYPES = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
+
 export function SettingsForm({ business }: { business: Business }) {
   const [state, formAction] = useActionState(
     updateBusinessAction,
     EMPTY_FORM_STATE,
   );
+
+  /*
+   * Checked in the browser as well as on the server. Not for security — the
+   * server decides — but so an oversized photo produces an instant, readable
+   * message instead of a slow upload that fails somewhere in the stack.
+   */
+  const [fileError, setFileError] = useState<string | null>(null);
+
+  const validateFile = (input: HTMLInputElement) => {
+    const file = input.files?.[0];
+    if (!file) {
+      setFileError(null);
+      return;
+    }
+
+    if (!LOGO_TYPES.includes(file.type)) {
+      setFileError("סוג הקובץ אינו נתמך. אפשר להעלות PNG, JPG, WEBP או SVG.");
+      input.value = "";
+      return;
+    }
+
+    if (file.size > LOGO_MAX_BYTES) {
+      const mb = (file.size / (1024 * 1024)).toFixed(1);
+      setFileError(
+        `הקובץ שנבחר שוקל ${mb}MB, והמגבלה היא 2MB. אפשר לצלם מסך של הלוגו או להקטין אותו.`,
+      );
+      input.value = "";
+      return;
+    }
+
+    setFileError(null);
+  };
 
   return (
     <form action={formAction} className="flex flex-col gap-4" noValidate>
@@ -73,9 +108,14 @@ export function SettingsForm({ business }: { business: Business }) {
           name="logo"
           type="file"
           accept="image/png,image/jpeg,image/webp,image/svg+xml"
+          onChange={(event) => validateFile(event.currentTarget)}
           className="w-full rounded-control border border-border bg-surface p-2 text-sm file:ml-3 file:rounded-lg file:border-0 file:bg-brand-soft file:px-3 file:py-2 file:text-sm file:font-semibold file:text-brand"
         />
-        <p className="text-xs text-muted">PNG, JPG, WEBP או SVG. עד 2MB.</p>
+        {fileError ? (
+          <Alert>{fileError}</Alert>
+        ) : (
+          <p className="text-xs text-muted">PNG, JPG, WEBP או SVG. עד 2MB.</p>
+        )}
       </div>
 
       <TextArea
