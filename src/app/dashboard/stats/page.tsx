@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { requireBusiness } from "@/lib/auth";
+import { formatILS } from "@/lib/format";
 import { QUOTE_STATUS } from "@/lib/quote-status";
 import {
   computeQuoteStats,
@@ -47,7 +48,7 @@ export default async function StatsPage() {
 
   const { data, error } = await supabase
     .from("quotes")
-    .select("status, sent_at, decided_at")
+    .select("status, sent_at, decided_at, total")
     .eq("business_id", business.id);
 
   const stats = computeQuoteStats((data ?? []) as StatsInput[]);
@@ -66,6 +67,30 @@ export default async function StatsPage() {
           טעינת הנתונים נכשלה. רענן את הדף ונסה שוב.
         </p>
       ) : null}
+
+      {/* Money first: it is the number a tradesperson actually opens this
+          screen to see. */}
+      <div className="rounded-card border border-success/30 bg-success-soft p-5">
+        <h2 className="text-sm font-semibold text-success">סכום שאושר</h2>
+        <p className="numeric mt-1 text-3xl font-bold">
+          {formatILS(stats.approvedValue)}
+        </p>
+        <p className="mt-1 text-sm text-muted">
+          {stats.approved === 0
+            ? "עדיין לא אושרה אף הצעה"
+            : `מתוך ${stats.approved} הצעות שאושרו`}
+        </p>
+      </div>
+
+      <Figure
+        label="ממתין לתשובה"
+        value={formatILS(stats.pendingValue)}
+        note={
+          stats.byStatus.sent + stats.byStatus.viewed === 0
+            ? "אין כרגע הצעות פתוחות"
+            : `${stats.byStatus.sent + stats.byStatus.viewed} הצעות שנשלחו וטרם הוכרעו`
+        }
+      />
 
       <Figure
         label="הצעות שנשלחו"

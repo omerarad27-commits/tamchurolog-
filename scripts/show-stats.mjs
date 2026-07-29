@@ -38,7 +38,7 @@ const { data: business } = await admin
 
 const { data: quotes } = await admin
   .from("quotes")
-  .select("quote_number, status, sent_at, decided_at")
+  .select("quote_number, status, sent_at, decided_at, total")
   .eq("business_id", business.id)
   .order("quote_number");
 
@@ -46,15 +46,16 @@ const hours = (from, to) =>
   from && to ? (new Date(to) - new Date(from)) / 3600000 : null;
 
 console.log(`\nBusiness: ${business.name}\n`);
-console.log("  #    status     sent?  decided?  hours to decide");
-console.log("  ---  ---------  -----  --------  ---------------");
+console.log("  #    status     sent?  decided?  hours   total");
+console.log("  ---  ---------  -----  --------  ------  ----------");
 for (const q of quotes) {
   const h = hours(q.sent_at, q.decided_at);
   console.log(
     `  ${String(q.quote_number).padEnd(4)} ${q.status.padEnd(10)} ` +
       `${(q.sent_at ? "yes" : "no").padEnd(6)} ` +
       `${(q.decided_at ? "yes" : "no").padEnd(9)} ` +
-      `${h === null ? "-" : h.toFixed(1)}`,
+      `${(h === null ? "-" : h.toFixed(1)).padEnd(7)} ` +
+      `${Number(q.total).toFixed(2)}`,
   );
 }
 
@@ -73,7 +74,12 @@ console.log(
   }`,
 );
 
+console.log(`  sum of approved totals         = ${stats.approvedValue.toFixed(2)}`);
+console.log(`  sum of sent+viewed totals      = ${stats.pendingValue.toFixed(2)}`);
+
 console.log("\nWhat the stats page will show:");
+console.log(`  Approved value       ${stats.approvedValue.toFixed(2)}`);
+console.log(`  Awaiting a reply     ${stats.pendingValue.toFixed(2)}`);
 console.log(`  Quotes sent          ${stats.sent}`);
 console.log(
   `  Close rate           ${

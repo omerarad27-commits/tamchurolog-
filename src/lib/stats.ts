@@ -12,6 +12,8 @@ export type StatsInput = {
   status: QuoteStatus;
   sent_at: string | null;
   decided_at: string | null;
+  /** Postgres numeric arrives as a string over PostgREST. */
+  total: string;
 };
 
 export type QuoteStats = {
@@ -33,6 +35,10 @@ export type QuoteStats = {
   averageDecisionHours: number | null;
   /** How many decided quotes the average is actually based on. */
   averageDecisionSample: number;
+  /** Money won: the sum of every approved quote. */
+  approvedValue: number;
+  /** Money still in play: sent or viewed, no decision yet. */
+  pendingValue: number;
 };
 
 const EMPTY_BY_STATUS: Record<QuoteStatus, number> = {
@@ -44,16 +50,30 @@ const EMPTY_BY_STATUS: Record<QuoteStatus, number> = {
   expired: 0,
 };
 
+/** Money is summed in agorot so repeated addition cannot drift. */
+function toAgorot(total: string): number {
+  const parsed = Number(total);
+  return Number.isFinite(parsed) ? Math.round(parsed * 100) : 0;
+}
+
 export function computeQuoteStats(quotes: StatsInput[]): QuoteStats {
   const byStatus = { ...EMPTY_BY_STATUS };
   let sent = 0;
   let decisionHoursTotal = 0;
   let decisionSample = 0;
+  let approvedAgorot = 0;
+  let pendingAgorot = 0;
 
   for (const quote of quotes) {
     byStatus[quote.status] = (byStatus[quote.status] ?? 0) + 1;
 
     if (quote.sent_at) sent += 1;
+
+    if (quote.status === "approved") {
+      approvedAgorot += toAgorot(quote.total);
+    } else if (quote.status === "sent" || quote.status === "viewed") {
+      pendingAgorot += toAgorot(quote.total);
+    }
 
     if (quote.sent_at && quote.decided_at) {
       const elapsed =
@@ -81,6 +101,8 @@ export function computeQuoteStats(quotes: StatsInput[]): QuoteStats {
     averageDecisionHours:
       decisionSample === 0 ? null : decisionHoursTotal / decisionSample,
     averageDecisionSample: decisionSample,
+    approvedValue: approvedAgorot / 100,
+    pendingValue: pendingAgorot / 100,
   };
 }
 
