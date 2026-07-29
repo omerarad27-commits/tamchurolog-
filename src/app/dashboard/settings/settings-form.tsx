@@ -55,7 +55,7 @@ export function SettingsForm({ business }: { business: Business }) {
               alt="הלוגו הנוכחי של העסק"
               width={56}
               height={56}
-              className="h-14 w-14 rounded-xl border border-border bg-surface object-contain"
+              className="h-14 w-14 rounded-tile border border-border bg-surface object-contain"
             />
             <label className="flex items-center gap-2 text-sm text-muted">
               <input
@@ -73,7 +73,7 @@ export function SettingsForm({ business }: { business: Business }) {
           name="logo"
           type="file"
           accept="image/png,image/jpeg,image/webp,image/svg+xml"
-          className="w-full rounded-xl border border-border bg-surface p-2 text-sm file:ml-3 file:rounded-lg file:border-0 file:bg-brand-soft file:px-3 file:py-2 file:text-sm file:font-semibold file:text-brand"
+          className="w-full rounded-control border border-border bg-surface p-2 text-sm file:ml-3 file:rounded-lg file:border-0 file:bg-brand-soft file:px-3 file:py-2 file:text-sm file:font-semibold file:text-brand"
         />
         <p className="text-xs text-muted">PNG, JPG, WEBP או SVG. עד 2MB.</p>
       </div>
@@ -89,7 +89,7 @@ export function SettingsForm({ business }: { business: Business }) {
 
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">מטבע</span>
-        <p className="rounded-xl border border-border bg-background px-3 py-3 text-sm text-muted">
+        <p className="rounded-tile border border-border bg-background px-3 py-3 text-sm text-muted">
           שקל חדש (₪) — קבוע בשלב זה.
         </p>
       </div>

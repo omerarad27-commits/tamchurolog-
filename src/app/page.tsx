@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { ButtonLink } from "@/components/ui/button";
 import { getUser } from "@/lib/auth";
 import { checkSupabaseHealth } from "@/lib/supabase/health";
 
@@ -11,7 +10,7 @@ export default async function HomePage() {
       <header className="flex items-center gap-3">
         <span
           aria-hidden="true"
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand text-2xl font-bold text-brand-foreground"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-tile bg-brand text-2xl font-bold text-brand-foreground"
         >
           ת
         </span>
@@ -21,7 +20,7 @@ export default async function HomePage() {
         </div>
       </header>
 
-      <section className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
+      <section className="rounded-card border border-border bg-surface p-5 shadow-sm">
         <h2 className="text-lg font-semibold">
           שולחים הצעת מחיר, ויודעים מה קרה איתה
         </h2>
@@ -31,26 +30,15 @@ export default async function HomePage() {
         </p>
 
         {user ? (
-          <Link
-            href="/dashboard"
-            className="mt-4 inline-flex h-12 w-full items-center justify-center rounded-xl bg-brand px-4 text-base font-semibold text-brand-foreground transition-colors hover:bg-brand/90"
-          >
+          <ButtonLink href="/dashboard" className="mt-4">
             לאזור האישי
-          </Link>
+          </ButtonLink>
         ) : (
           <div className="mt-4 flex flex-col gap-2">
-            <Link
-              href="/signup"
-              className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-brand px-4 text-base font-semibold text-brand-foreground transition-colors hover:bg-brand/90"
-            >
-              פתיחת חשבון
-            </Link>
-            <Link
-              href="/login"
-              className="inline-flex h-12 w-full items-center justify-center rounded-xl border border-border bg-surface px-4 text-base font-semibold transition-colors hover:bg-background"
-            >
+            <ButtonLink href="/signup">פתיחת חשבון</ButtonLink>
+            <ButtonLink href="/login" variant="secondary">
               התחברות
-            </Link>
+            </ButtonLink>
           </div>
         )}
       </section>
@@ -67,7 +55,7 @@ function SupabaseHealthCard({
 }) {
   if (health.status === "ok") {
     return (
-      <section className="rounded-2xl border border-border bg-success-soft p-5">
+      <section className="rounded-card border border-border bg-success-soft p-5">
         <div className="flex items-center gap-2">
           <span
             aria-hidden="true"
@@ -84,7 +72,7 @@ function SupabaseHealthCard({
 
   if (health.status === "missing-env") {
     return (
-      <section className="rounded-2xl border border-border bg-warning-soft p-5">
+      <section className="rounded-card border border-border bg-warning-soft p-5">
         <div className="flex items-center gap-2">
           <span
             aria-hidden="true"
@@ -111,7 +99,7 @@ function SupabaseHealthCard({
   }
 
   return (
-    <section className="rounded-2xl border border-border bg-danger-soft p-5">
+    <section className="rounded-card border border-border bg-danger-soft p-5">
       <div className="flex items-center gap-2">
         <span
           aria-hidden="true"

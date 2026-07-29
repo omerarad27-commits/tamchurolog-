@@ -6,14 +6,14 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
       <Link href="/" className="flex items-center gap-3 self-center">
         <span
           aria-hidden="true"
-          className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand text-xl font-bold text-brand-foreground"
+          className="flex h-11 w-11 items-center justify-center rounded-tile bg-brand text-xl font-bold text-brand-foreground"
         >
           ת
         </span>
         <span className="text-xl font-bold">תמחורולוג</span>
       </Link>
 
-      <div className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
+      <div className="rounded-card border border-border bg-surface p-5 shadow-sm">
         {children}
       </div>
     </div>

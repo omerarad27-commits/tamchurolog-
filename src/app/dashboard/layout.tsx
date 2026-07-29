@@ -21,12 +21,12 @@ export default async function DashboardLayout({
               alt=""
               width={36}
               height={36}
-              className="h-9 w-9 shrink-0 rounded-xl border border-border object-contain"
+              className="h-9 w-9 shrink-0 rounded-tile border border-border object-contain"
             />
           ) : (
             <span
               aria-hidden="true"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand text-base font-bold text-brand-foreground"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-tile bg-brand text-base font-bold text-brand-foreground"
             >
               ת
             </span>

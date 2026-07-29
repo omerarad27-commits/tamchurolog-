@@ -14,7 +14,7 @@ export function Alert({
   return (
     <p
       role={tone === "error" ? "alert" : "status"}
-      className={`rounded-xl border px-3 py-2.5 text-sm ${TONES[tone]}`}
+      className={`rounded-tile border px-3 py-2.5 text-sm ${TONES[tone]}`}
     >
       {children}
     </p>

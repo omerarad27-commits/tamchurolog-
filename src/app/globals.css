@@ -36,6 +36,18 @@
   --color-danger-soft: var(--danger-soft);
 
   --font-sans: var(--font-assistant), system-ui, sans-serif;
+
+  /* Shape and size tokens.
+     Three radius names deliberately share two values: if buttons later become
+     rounder, cards and tiles should not follow along by accident. */
+  --radius-control: 0.75rem; /* buttons, inputs, selects */
+  --radius-card: 1rem; /* cards and list rows */
+  --radius-tile: 0.75rem; /* alerts, inner panels, logo tiles */
+
+  /* 48px and 44px. Both clear the 44px minimum touch target; these screens are
+     used one-handed on a phone. */
+  --spacing-control: 3rem;
+  --spacing-control-sm: 2.75rem;
 }
 
 body {

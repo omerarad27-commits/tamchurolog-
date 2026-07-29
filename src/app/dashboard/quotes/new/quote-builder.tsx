@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useId, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { TextArea } from "@/components/ui/textarea";
-import { TextField } from "@/components/ui/text-field";
+import { inputClasses, TextField } from "@/components/ui/text-field";
 import { formatILS } from "@/lib/format";
 import type { Client } from "@/lib/types";
 import { EMPTY_FORM_STATE } from "@/lib/validation";
@@ -92,7 +92,7 @@ export function QuoteBuilder({
       <input type="hidden" name="lines" value={JSON.stringify(lines)} />
 
       {/* ---------------------------------------------------------- client */}
-      <section className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 shadow-sm">
+      <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-5 shadow-sm">
         <div className="flex flex-col gap-1.5">
           <label htmlFor={clientSelectId} className="text-sm font-medium">
             לקוח
@@ -102,7 +102,7 @@ export function QuoteBuilder({
             name="clientId"
             value={clientId}
             onChange={(event) => setClientId(event.target.value)}
-            className="h-12 w-full rounded-xl border border-border bg-surface px-3 text-base focus:border-brand focus:outline-2 focus:outline-brand"
+            className={inputClasses}
             required
           >
             <option value="">בחר לקוח…</option>
@@ -116,7 +116,7 @@ export function QuoteBuilder({
         </div>
 
         {clientId === NEW_CLIENT ? (
-          <div className="flex flex-col gap-3 rounded-xl bg-background p-3">
+          <div className="flex flex-col gap-3 rounded-tile bg-background p-3">
             <TextField
               label="שם הלקוח החדש"
               name="newClientName"
@@ -147,7 +147,7 @@ export function QuoteBuilder({
           return (
             <div
               key={line.key}
-              className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 shadow-sm"
+              className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 shadow-sm"
             >
               <div className="flex items-start gap-2">
                 <span className="numeric mt-3 text-sm font-semibold text-muted">
@@ -161,7 +161,7 @@ export function QuoteBuilder({
                   }
                   placeholder="תיאור העבודה או החומר"
                   maxLength={300}
-                  className="h-12 w-full rounded-xl border border-border bg-surface px-3 text-base placeholder:text-muted/70 focus:border-brand focus:outline-2 focus:outline-brand"
+                  className={inputClasses}
                 />
               </div>
 
@@ -175,7 +175,7 @@ export function QuoteBuilder({
                     }
                     inputMode="decimal"
                     dir="ltr"
-                    className="numeric h-12 w-full rounded-xl border border-border bg-surface px-3 text-start text-base focus:border-brand focus:outline-2 focus:outline-brand"
+                    className={`${inputClasses} numeric text-start`}
                   />
                 </div>
                 <div className="flex-1">
@@ -190,7 +190,7 @@ export function QuoteBuilder({
                     inputMode="decimal"
                     dir="ltr"
                     placeholder="0"
-                    className="numeric h-12 w-full rounded-xl border border-border bg-surface px-3 text-start text-base focus:border-brand focus:outline-2 focus:outline-brand"
+                    className={`${inputClasses} numeric text-start`}
                   />
                 </div>
               </div>
@@ -233,23 +233,23 @@ export function QuoteBuilder({
           );
         })}
 
-        <button
+        <Button
           type="button"
+          variant="dashed"
           onClick={() => setLines((current) => [...current, emptyLine()])}
-          className="h-12 w-full rounded-xl border border-dashed border-border text-base font-semibold text-brand transition-colors hover:bg-brand-soft"
         >
           + הוספת פריט
-        </button>
+        </Button>
       </section>
 
       {/* ---------------------------------------------------------- total */}
-      <section className="flex items-center justify-between rounded-2xl border border-border bg-surface p-5 shadow-sm">
+      <section className="flex items-center justify-between rounded-card border border-border bg-surface p-5 shadow-sm">
         <span className="text-base font-semibold">סה״כ</span>
         <span className="numeric text-2xl font-bold">{formatILS(total)}</span>
       </section>
 
       {/* --------------------------------------------------------- details */}
-      <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5 shadow-sm">
+      <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5 shadow-sm">
         <TextField
           label="בתוקף עד"
           name="validUntil"
@@ -272,12 +272,9 @@ export function QuoteBuilder({
 
       <div className="flex flex-col gap-2">
         <SubmitButton pendingLabel="שומר…">שמירה כטיוטה</SubmitButton>
-        <Link
-          href="/dashboard"
-          className="flex h-12 w-full items-center justify-center rounded-xl border border-border bg-surface text-base font-semibold transition-colors hover:bg-background"
-        >
+        <ButtonLink href="/dashboard" variant="secondary">
           ביטול
-        </Link>
+        </ButtonLink>
       </div>
     </form>
   );

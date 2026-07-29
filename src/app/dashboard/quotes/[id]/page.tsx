@@ -74,7 +74,7 @@ export default async function QuotePage({
         </p>
       </div>
 
-      <section className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
+      <section className="rounded-card border border-border bg-surface p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-muted">לקוח</h2>
         <p className="mt-1 font-semibold">{client?.full_name ?? "—"}</p>
         {client?.phone ? (
@@ -86,7 +86,7 @@ export default async function QuotePage({
         )}
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
+      <section className="overflow-hidden rounded-card border border-border bg-surface shadow-sm">
         <h2 className="border-b border-border px-5 py-3 text-sm font-semibold text-muted">
           פירוט
         </h2>
@@ -117,7 +117,7 @@ export default async function QuotePage({
       </section>
 
       {quote.notes ? (
-        <section className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
+        <section className="rounded-card border border-border bg-surface p-5 shadow-sm">
           <h2 className="text-sm font-semibold text-muted">הערות ותנאים</h2>
           <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">
             {quote.notes}

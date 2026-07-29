@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 import { deleteClientAction } from "./actions";
 
 /**
@@ -24,12 +26,9 @@ export function DeleteClientButton({
       }}
     >
       <input type="hidden" name="id" value={id} />
-      <button
-        type="submit"
-        className="h-12 w-full rounded-xl border border-danger/30 text-base font-semibold text-danger transition-colors hover:bg-danger-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
-      >
+      <Button type="submit" variant="danger">
         מחיקת הלקוח
-      </button>
+      </Button>
     </form>
   );
 }

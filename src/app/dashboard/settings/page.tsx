@@ -20,7 +20,7 @@ export default async function SettingsPage() {
         </p>
       </div>
 
-      <div className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
+      <div className="rounded-card border border-border bg-surface p-5 shadow-sm">
         <SettingsForm business={business} />
       </div>
     </div>

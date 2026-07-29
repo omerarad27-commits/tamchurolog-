@@ -1,5 +1,15 @@
 import type { ComponentProps } from "react";
 
+/**
+ * Shared look for every single-line control: inputs, selects, and the bare
+ * inputs inside the quote builder. Exported so those stay in sync with the
+ * fields rendered by <TextField>.
+ */
+export const inputClasses =
+  "h-control w-full rounded-control border border-border bg-surface px-3 text-base " +
+  "placeholder:text-muted/70 " +
+  "focus:border-brand focus:outline-2 focus:outline-offset-0 focus:outline-brand";
+
 type TextFieldProps = ComponentProps<"input"> & {
   label: string;
   name: string;
@@ -24,12 +34,7 @@ export function TextField({
         id={name}
         name={name}
         aria-describedby={hintId}
-        className={
-          "h-12 w-full rounded-xl border border-border bg-surface px-3 text-base " +
-          "placeholder:text-muted/70 " +
-          "focus:border-brand focus:outline-2 focus:outline-offset-0 focus:outline-brand " +
-          className
-        }
+        className={`${inputClasses} ${className}`}
         {...props}
       />
       {hint ? (
