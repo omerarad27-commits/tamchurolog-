@@ -1,9 +1,9 @@
 import Image from "next/image";
 
-import { signOutAction } from "@/app/(auth)/actions";
 import { requireBusiness } from "@/lib/auth";
 
 import { DashboardNav } from "./nav";
+import { SignOutButton } from "./sign-out-button";
 
 export default async function DashboardLayout({
   children,
@@ -37,14 +37,7 @@ export default async function DashboardLayout({
             <p className="truncate text-xs text-muted">{user.email}</p>
           </div>
 
-          <form action={signOutAction}>
-            <button
-              type="submit"
-              className="rounded-lg px-2 py-1.5 text-sm font-medium text-muted transition-colors hover:bg-background hover:text-danger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-            >
-              יציאה
-            </button>
-          </form>
+          <SignOutButton />
         </div>
       </header>
 

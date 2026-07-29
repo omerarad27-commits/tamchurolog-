@@ -36,7 +36,7 @@ export default async function EditClientPage({
           href="/dashboard/clients"
           className="text-sm font-medium text-muted hover:text-foreground"
         >
-          ‹ חזרה ללקוחות
+          <span aria-hidden="true">›</span> חזרה ללקוחות
         </Link>
         <h1 className="mt-2 truncate text-2xl font-bold">{client.full_name}</h1>
       </div>

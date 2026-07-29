@@ -1,12 +1,13 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 import { deleteClientAction } from "./actions";
 
 /**
  * Deletion is irreversible and the button sits right under the save button on a
- * small screen, so it asks first.
+ * small screen, so it asks first. Once confirmed it goes through SubmitButton,
+ * which disables itself so an impatient second tap cannot fire another delete.
  */
 export function DeleteClientButton({
   id,
@@ -26,9 +27,9 @@ export function DeleteClientButton({
       }}
     >
       <input type="hidden" name="id" value={id} />
-      <Button type="submit" variant="danger">
+      <SubmitButton variant="danger" pendingLabel="מוחק…">
         מחיקת הלקוח
-      </Button>
+      </SubmitButton>
     </form>
   );
 }

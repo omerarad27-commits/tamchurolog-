@@ -77,15 +77,34 @@ export default async function StatsPage() {
         }
       />
 
-      <Figure
-        label="אחוז סגירה"
-        value={formatCloseRate(stats.closeRate)}
-        note={
-          stats.closeRate === null
+      <div className="rounded-card border border-border bg-surface p-5 shadow-sm">
+        <h2 className="text-sm font-semibold text-muted">אחוז סגירה</h2>
+        <p className="numeric mt-1 text-3xl font-bold">
+          {formatCloseRate(stats.closeRate)}
+        </p>
+
+        {/* Two divs, not a chart library: the point is to read the number at a
+            glance without parsing digits. Hidden when there is nothing to show,
+            because an empty bar looks like a real zero. */}
+        {stats.closeRate !== null ? (
+          <div
+            className="mt-3 h-2 w-full overflow-hidden rounded-full bg-background"
+            role="img"
+            aria-label={`${Math.round(stats.closeRate * 100)} אחוז מההצעות שהוכרעו אושרו`}
+          >
+            <div
+              className="h-full rounded-full bg-success transition-[width]"
+              style={{ width: `${Math.round(stats.closeRate * 100)}%` }}
+            />
+          </div>
+        ) : null}
+
+        <p className="mt-2 text-sm text-muted">
+          {stats.closeRate === null
             ? "אין עדיין הצעות שהוכרעו, אז אין מה לחשב"
-            : `${stats.approved} אושרו מתוך ${stats.decided} שהוכרעו`
-        }
-      />
+            : `${stats.approved} אושרו מתוך ${stats.decided} שהוכרעו`}
+        </p>
+      </div>
 
       <Figure
         label="זמן ממוצע עד החלטה"

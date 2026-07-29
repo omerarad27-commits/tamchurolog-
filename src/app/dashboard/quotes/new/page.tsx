@@ -34,7 +34,7 @@ export default async function NewQuotePage() {
           href="/dashboard"
           className="text-sm font-medium text-muted hover:text-foreground"
         >
-          ‹ חזרה להצעות
+          <span aria-hidden="true">›</span> חזרה להצעות
         </Link>
         <h1 className="mt-2 text-2xl font-bold">הצעה חדשה</h1>
       </div>

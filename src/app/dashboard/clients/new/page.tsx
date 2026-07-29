@@ -15,7 +15,7 @@ export default function NewClientPage() {
           href="/dashboard/clients"
           className="text-sm font-medium text-muted hover:text-foreground"
         >
-          ‹ חזרה ללקוחות
+          <span aria-hidden="true">›</span> חזרה ללקוחות
         </Link>
         <h1 className="mt-2 text-2xl font-bold">לקוח חדש</h1>
       </div>
