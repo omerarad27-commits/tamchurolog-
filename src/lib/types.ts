@@ -51,6 +51,10 @@ export type Quote = {
    * constant, so a change in the law never rewrites an old document.
    */
   vat_rate: string;
+  /** Raw sum of the line items, i.e. exactly what the owner typed. */
+  lines_total: string;
+  /** True when the entered prices already contain VAT and it is extracted. */
+  prices_include_vat: boolean;
   public_token: string;
   first_viewed_at: string | null;
   last_viewed_at: string | null;

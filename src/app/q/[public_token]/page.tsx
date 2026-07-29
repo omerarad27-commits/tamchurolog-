@@ -162,7 +162,7 @@ export default async function PublicQuotePage({
           {hasVat ? (
             <>
               <div className="flex items-center justify-between gap-3 text-sm">
-                <dt className="text-muted">סכום ביניים</dt>
+                <dt className="text-muted">סכום לפני מע״מ</dt>
                 <dd className="numeric font-medium">
                   {formatILS(Number(quote.subtotal))}
                 </dd>

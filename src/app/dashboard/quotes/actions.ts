@@ -151,6 +151,8 @@ export async function createQuoteAction(
    * quote keeps the rate it was issued under.
    */
   const withVat = formData.get("withVat") === "on";
+  const pricesIncludeVat =
+    withVat && formData.get("priceMode") === "inclusive";
 
   const { data: quote, error: quoteError } = await supabase
     .from("quotes")
@@ -160,6 +162,7 @@ export async function createQuoteAction(
       valid_until: validUntilRaw || null,
       notes: notes || null,
       vat_rate: withVat ? VAT_RATE : 0,
+      prices_include_vat: pricesIncludeVat,
     })
     .select("id")
     .single();

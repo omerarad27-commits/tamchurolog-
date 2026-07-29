@@ -11,7 +11,7 @@ import { BUSINESS_TYPE_LABELS, type BusinessType } from "@/lib/business-type";
 import { formatILS } from "@/lib/format";
 import type { Client } from "@/lib/types";
 import { EMPTY_FORM_STATE } from "@/lib/validation";
-import { formatVatRate, vatAmount, VAT_RATE } from "@/lib/vat";
+import { formatVatRate, splitVat, VAT_RATE } from "@/lib/vat";
 
 import { createQuoteAction } from "../actions";
 
@@ -63,6 +63,7 @@ export function QuoteBuilder({
   );
   const [lines, setLines] = useState<DraftLine[]>(() => [emptyLine()]);
   const [withVat, setWithVat] = useState(defaultWithVat);
+  const [pricesIncludeVat, setPricesIncludeVat] = useState(false);
   const clientSelectId = useId();
 
   const updateLine = (key: string, patch: Partial<DraftLine>) => {
@@ -89,15 +90,18 @@ export function QuoteBuilder({
     });
   };
 
-  const subtotal =
-    Math.round(
-      lines.reduce(
-        (sum, line) => sum + toNumber(line.quantity) * toNumber(line.unitPrice),
-        0,
-      ) * 100,
-    ) / 100;
-  const vat = withVat ? vatAmount(subtotal, VAT_RATE) : 0;
-  const total = subtotal + vat;
+  const linesTotal = lines.reduce(
+    (sum, line) => sum + toNumber(line.quantity) * toNumber(line.unitPrice),
+    0,
+  );
+
+  // Same function the database uses, so what is shown while typing is what
+  // gets stored on save.
+  const { subtotal, vat, total } = splitVat(
+    linesTotal,
+    withVat ? VAT_RATE : 0,
+    pricesIncludeVat,
+  );
 
   return (
     <form action={formAction} className="flex flex-col gap-5" noValidate>
@@ -289,9 +293,54 @@ export function QuoteBuilder({
           />
         </label>
 
+        {/* Only meaningful once VAT is on: it says what the numbers typed into
+            the line items already mean. */}
+        {withVat ? (
+          <div className="flex flex-col gap-1.5 border-t border-border pt-3">
+            <span className="text-sm font-medium">
+              המחירים שהזנתי בפריטים הם
+            </span>
+            <div className="flex gap-2">
+              {(
+                [
+                  { mode: false, label: "לפני מע״מ" },
+                  { mode: true, label: "כולל מע״מ" },
+                ] as const
+              ).map(({ mode, label }) => (
+                <label
+                  key={label}
+                  className={
+                    "flex h-control-sm flex-1 cursor-pointer items-center justify-center rounded-control border text-sm font-semibold transition-colors " +
+                    (pricesIncludeVat === mode
+                      ? "border-brand bg-brand text-brand-foreground"
+                      : "border-border bg-surface text-muted hover:bg-background")
+                  }
+                >
+                  <input
+                    type="radio"
+                    name="priceMode"
+                    value={mode ? "inclusive" : "exclusive"}
+                    checked={pricesIncludeVat === mode}
+                    onChange={() => setPricesIncludeVat(mode)}
+                    className="sr-only"
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-muted">
+              {pricesIncludeVat
+                ? "המע״מ יחולץ מתוך הסכום שהזנת. הלקוח ישלם בדיוק את מה שרשמת."
+                : "המע״מ יתווסף מעל לסכום שהזנת."}
+            </p>
+          </div>
+        ) : null}
+
         <dl className="flex flex-col gap-1.5 border-t border-border pt-3 text-sm">
           <div className="flex items-center justify-between gap-3">
-            <dt className="text-muted">סכום ביניים</dt>
+            <dt className="text-muted">
+              {withVat ? "סכום לפני מע״מ" : "סכום ביניים"}
+            </dt>
             <dd className="numeric font-medium">{formatILS(subtotal)}</dd>
           </div>
 

@@ -13,6 +13,8 @@
 
 import { createClient } from "@supabase/supabase-js";
 
+import { splitVat } from "../src/lib/vat.ts";
+
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -452,6 +454,80 @@ async function main() {
     Number(plain.vat_rate) === 0 && Number(plain.tax_amount) === 0 &&
       Number(plain.total) === 1000,
     `${plain.vat_rate} / ${plain.tax_amount} / ${plain.total}`);
+
+  console.log("\n9. Prices entered inclusive of VAT");
+
+  const quoteFor = async (amount, includeVat, rate = 0.18) => {
+    const { data } = await admin
+      .from("quotes")
+      .insert({
+        business_id: openQuote.business_id,
+        client_id: openQuote.client_id,
+        status: "draft",
+        vat_rate: rate,
+        prices_include_vat: includeVat,
+      })
+      .select("id, public_token")
+      .single();
+    await admin.from("quote_line_items").insert({
+      quote_id: data.id, description: "Job", quantity: 1, unit_price: amount, sort_order: 0,
+    });
+    return data;
+  };
+
+  const inclusive = await quoteFor(1180, true);
+  const incMoney = await readMoney(inclusive.id);
+  check("entering 1180 inclusive gives a net of 1000",
+    Number(incMoney.subtotal) === 1000, String(incMoney.subtotal));
+  check("VAT is extracted as 180", Number(incMoney.tax_amount) === 180,
+    String(incMoney.tax_amount));
+  check("the client still pays exactly the 1180 that was typed",
+    Number(incMoney.total) === 1180, String(incMoney.total));
+
+  const incPage = await visit(BROWSER_UA, `/q/${inclusive.public_token}`);
+  check("the public page shows the extracted breakdown",
+    incPage.body.includes("1,000.00") && incPage.body.includes("180.00") &&
+      incPage.body.includes("1,180.00"));
+
+  /*
+   * The real risk is the browser and the database disagreeing: the owner would
+   * watch one total while typing and find another after saving. Same amounts
+   * through both, compared to the agora.
+   */
+  const amounts = [1180, 100, 0.01, 999.99, 12345.67, 1, 7.77];
+  let mismatches = 0;
+  for (const amount of amounts) {
+    for (const includeVat of [true, false]) {
+      const created = await quoteFor(amount, includeVat);
+      const fromDb = await readMoney(created.id);
+      const fromApp = splitVat(amount, 0.18, includeVat);
+
+      const same =
+        Number(fromDb.subtotal) === fromApp.subtotal &&
+        Number(fromDb.tax_amount) === fromApp.vat &&
+        Number(fromDb.total) === fromApp.total;
+
+      if (!same) {
+        mismatches += 1;
+        console.log(
+          `        mismatch at ${amount} ${includeVat ? "inclusive" : "exclusive"}: ` +
+            `db ${fromDb.subtotal}/${fromDb.tax_amount}/${fromDb.total} vs ` +
+            `app ${fromApp.subtotal}/${fromApp.vat}/${fromApp.total}`,
+        );
+      }
+
+      /* Whatever the mode, the three figures must reconcile exactly. */
+      const reconciles =
+        Math.round((Number(fromDb.subtotal) + Number(fromDb.tax_amount)) * 100) ===
+        Math.round(Number(fromDb.total) * 100);
+      if (!reconciles) mismatches += 1;
+    }
+  }
+  check(
+    `the builder and the database agree on all ${amounts.length * 2} cases, and every one reconciles`,
+    mismatches === 0,
+    mismatches === 0 ? "" : `${mismatches} mismatches`,
+  );
 }
 
 let exitCode = 0;
