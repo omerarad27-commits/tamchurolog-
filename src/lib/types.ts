@@ -4,6 +4,8 @@ export type Business = {
   id: string;
   owner_user_id: string;
   name: string;
+  /** "exempt" | "licensed" | "company" — see lib/business-type.ts */
+  business_type: string;
   phone: string | null;
   logo_url: string | null;
   default_terms: string | null;

@@ -44,7 +44,9 @@ export async function requireBusiness() {
 
   const { data, error } = await supabase
     .from("businesses")
-    .select("id, owner_user_id, name, phone, logo_url, default_terms, currency, created_at")
+    .select(
+      "id, owner_user_id, name, business_type, phone, logo_url, default_terms, currency, created_at",
+    )
     .eq("owner_user_id", user.id)
     .maybeSingle();
 

@@ -4,9 +4,11 @@ import Image from "next/image";
 import { useActionState, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
+import { BusinessTypePicker } from "@/components/ui/business-type-picker";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { TextArea } from "@/components/ui/textarea";
 import { TextField } from "@/components/ui/text-field";
+import { toBusinessType } from "@/lib/business-type";
 import { formatPhoneForDisplay } from "@/lib/phone";
 import { formatBytes, shrinkImage } from "@/lib/shrink-image";
 import type { Business } from "@/lib/types";
@@ -86,6 +88,11 @@ export function SettingsForm({ business }: { business: Business }) {
         hint="מופיע ללקוחות בראש הצעת המחיר."
         maxLength={80}
         required
+      />
+
+      <BusinessTypePicker
+        defaultValue={toBusinessType(business.business_type)}
+        label="סוג העסק — קובע אם הצעות חדשות כוללות מע״מ"
       />
 
       <TextField

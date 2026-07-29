@@ -61,9 +61,15 @@ async function createOwner(owner, businessName) {
   return business;
 }
 
+/** Extra users created mid-run, removed alongside the two main owners. */
+const throwaway = [];
+
 async function cleanup() {
   for (const owner of Object.values(owners)) {
     if (owner.id) await admin.auth.admin.deleteUser(owner.id);
+  }
+  for (const id of throwaway) {
+    await admin.auth.admin.deleteUser(id);
   }
 }
 
@@ -359,6 +365,52 @@ async function main() {
     "B cannot approve A's quote",
     (bStealsPrice.data ?? []).length === 0,
     `rows updated: ${(bStealsPrice.data ?? []).length}`,
+  );
+
+  console.log("\n7. Business type chosen at signup");
+
+  /*
+   * The type decides whether new quotes charge VAT, so it has to survive the
+   * trip from the signup form through user metadata into the business row.
+   */
+  const signUpAs = async (label, metadata) => {
+    const email = `type-check-${label}-${stamp}@example.com`;
+    const { data, error } = await admin.auth.admin.createUser({
+      email,
+      password: PASSWORD,
+      email_confirm: true,
+      user_metadata: { business_name: `Type ${label}`, ...metadata },
+    });
+    if (error) throw new Error(`createUser failed: ${error.message}`);
+    throwaway.push(data.user.id);
+
+    const { data: business } = await admin
+      .from("businesses")
+      .select("business_type")
+      .eq("owner_user_id", data.user.id)
+      .single();
+    return business.business_type;
+  };
+
+  check(
+    "choosing osek patur is stored as exempt",
+    (await signUpAs("exempt", { business_type: "exempt" })) === "exempt",
+  );
+  check(
+    "choosing osek murshe is stored as licensed",
+    (await signUpAs("licensed", { business_type: "licensed" })) === "licensed",
+  );
+  check(
+    "choosing a company is stored as company",
+    (await signUpAs("company", { business_type: "company" })) === "company",
+  );
+  check(
+    "no choice at all falls back to licensed rather than failing signup",
+    (await signUpAs("missing", {})) === "licensed",
+  );
+  check(
+    "an unrecognised value falls back to licensed",
+    (await signUpAs("bogus", { business_type: "sole-trader" })) === "licensed",
   );
 }
 

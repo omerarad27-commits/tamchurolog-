@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import { signUpAction } from "@/app/(auth)/actions";
 import { Alert } from "@/components/ui/alert";
+import { BusinessTypePicker } from "@/components/ui/business-type-picker";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { TextField } from "@/components/ui/text-field";
 import { MIN_PASSWORD_LENGTH, type AuthFormState } from "@/lib/validation";
@@ -24,6 +25,8 @@ export function SignupForm() {
         hint="השם הזה יופיע ללקוחות שלך על הצעת המחיר."
         required
       />
+
+      <BusinessTypePicker />
 
       <TextField
         label="אימייל"

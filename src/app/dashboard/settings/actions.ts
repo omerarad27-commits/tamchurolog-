@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireBusiness } from "@/lib/auth";
+import { toBusinessType } from "@/lib/business-type";
 import { normalizeIsraeliPhone } from "@/lib/phone";
 import type { FormState } from "@/lib/validation";
 
@@ -105,6 +106,7 @@ export async function updateBusinessAction(
     .from("businesses")
     .update({
       name,
+      business_type: toBusinessType(formData.get("businessType")),
       phone,
       default_terms: defaultTerms || null,
       logo_url: logoUrl,

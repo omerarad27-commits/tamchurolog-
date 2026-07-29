@@ -4,6 +4,7 @@ import type { AuthError } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { toBusinessType } from "@/lib/business-type";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   MIN_PASSWORD_LENGTH,
@@ -67,8 +68,13 @@ export async function signUpAction(
   const { error } = await supabase.auth.signUp({
     email,
     password,
-    // Read by the on_auth_user_created trigger to name the new business row.
-    options: { data: { business_name: businessName } },
+    // Read by the on_auth_user_created trigger to set up the business row.
+    options: {
+      data: {
+        business_name: businessName,
+        business_type: toBusinessType(formData.get("businessType")),
+      },
+    },
   });
 
   if (error) {

@@ -7,6 +7,7 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { TextArea } from "@/components/ui/textarea";
 import { inputClasses, TextField } from "@/components/ui/text-field";
+import { BUSINESS_TYPE_LABELS, type BusinessType } from "@/lib/business-type";
 import { formatILS } from "@/lib/format";
 import type { Client } from "@/lib/types";
 import { EMPTY_FORM_STATE } from "@/lib/validation";
@@ -43,10 +44,14 @@ export function QuoteBuilder({
   clients,
   defaultValidUntil,
   defaultNotes,
+  businessType,
+  defaultWithVat,
 }: {
   clients: Client[];
   defaultValidUntil: string;
   defaultNotes: string;
+  businessType: BusinessType;
+  defaultWithVat: boolean;
 }) {
   const [state, formAction] = useActionState(
     createQuoteAction,
@@ -57,7 +62,7 @@ export function QuoteBuilder({
     clients.length === 1 ? clients[0].id : "",
   );
   const [lines, setLines] = useState<DraftLine[]>(() => [emptyLine()]);
-  const [withVat, setWithVat] = useState(true);
+  const [withVat, setWithVat] = useState(defaultWithVat);
   const clientSelectId = useId();
 
   const updateLine = (key: string, patch: Partial<DraftLine>) => {
@@ -264,6 +269,15 @@ export function QuoteBuilder({
                 ? "המחירים בהצעה יוצגו לפני מע״מ, והמע״מ יתווסף לסכום הסופי."
                 : "ההצעה תישלח ללא מע״מ."}
             </span>
+
+            {/* An exempt business is not allowed to charge VAT at all, so if
+                the switch is on here it is almost certainly a mistake. */}
+            {businessType === "exempt" && withVat ? (
+              <span className="mt-1 block text-sm font-medium text-warning">
+                העסק מוגדר כ{BUSINESS_TYPE_LABELS.exempt.label}, שאינו רשאי
+                לגבות מע״מ. אפשר לשנות את סוג העסק בהגדרות.
+              </span>
+            ) : null}
           </span>
 
           <input

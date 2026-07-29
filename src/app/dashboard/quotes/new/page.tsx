@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { requireBusiness } from "@/lib/auth";
+import { defaultChargesVat, toBusinessType } from "@/lib/business-type";
 import type { Client } from "@/lib/types";
 
 import { QuoteBuilder } from "./quote-builder";
@@ -43,6 +44,8 @@ export default async function NewQuotePage() {
         clients={clients}
         defaultValidUntil={validUntil.toISOString().slice(0, 10)}
         defaultNotes={business.default_terms ?? ""}
+        businessType={toBusinessType(business.business_type)}
+        defaultWithVat={defaultChargesVat(toBusinessType(business.business_type))}
       />
     </div>
   );
