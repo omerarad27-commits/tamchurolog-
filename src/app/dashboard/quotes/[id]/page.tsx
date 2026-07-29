@@ -7,7 +7,8 @@ import { requireBusiness } from "@/lib/auth";
 import { publicEnv } from "@/lib/env";
 import { formatDate, formatDateTime, formatILS, formatQuantity } from "@/lib/format";
 import { formatPhoneForDisplay } from "@/lib/phone";
-import type { Client, Quote, QuoteLineItem } from "@/lib/types";
+import { ButtonLink } from "@/components/ui/button";
+import { isQuoteEditable, type Client, type Quote, type QuoteLineItem } from "@/lib/types";
 import { formatVatRate } from "@/lib/vat";
 import { buildQuoteMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 
@@ -26,7 +27,7 @@ export default async function QuotePage({
   const { data: quoteRow } = await supabase
     .from("quotes")
     .select(
-      "id, business_id, client_id, quote_number, status, issued_at, sent_at, valid_until, notes, subtotal, tax_amount, total, vat_rate, public_token, first_viewed_at, last_viewed_at, decision_signature_name, decided_at, decision_reason, created_at, updated_at",
+      "id, business_id, client_id, quote_number, status, issued_at, sent_at, valid_until, notes, subtotal, tax_amount, total, vat_rate, lines_total, prices_include_vat, public_token, first_viewed_at, last_viewed_at, decision_signature_name, decided_at, decision_reason, created_at, updated_at",
     )
     .eq("id", id)
     .eq("business_id", business.id)
@@ -204,6 +205,17 @@ export default async function QuotePage({
           </dl>
         </section>
       ) : null}
+
+      {isQuoteEditable(quote.status) ? (
+        <ButtonLink href={`/dashboard/quotes/${quote.id}/edit`} variant="secondary">
+          עריכת ההצעה
+        </ButtonLink>
+      ) : (
+        <p className="rounded-tile border border-border bg-background px-3 py-2.5 text-sm text-muted">
+          הלקוח כבר הכריע לגבי ההצעה הזו, ולכן היא נעולה לעריכה. אפשר ליצור הצעה
+          חדשה.
+        </p>
+      )}
 
       <SendQuote
         quoteId={quote.id}

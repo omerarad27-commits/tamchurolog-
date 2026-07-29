@@ -528,6 +528,97 @@ async function main() {
     mismatches === 0,
     mismatches === 0 ? "" : `${mismatches} mismatches`,
   );
+
+  console.log("\n10. Editing a quote, and the link already in the client's hands");
+
+  /* A quote that has been sent and viewed, as if the client opened it. */
+  const sentQuote = await quoteFor(1000, false, 0);
+  await admin
+    .from("quotes")
+    .update({
+      status: "viewed",
+      sent_at: new Date().toISOString(),
+      first_viewed_at: new Date().toISOString(),
+      last_viewed_at: new Date().toISOString(),
+      reminded_at: new Date().toISOString(),
+    })
+    .eq("id", sentQuote.id);
+
+  const oldToken = sentQuote.public_token;
+  const beforeEdit = await visit(BROWSER_UA, `/q/${oldToken}`);
+  check("the link works before the edit", beforeEdit.status === 200,
+    `status ${beforeEdit.status}`);
+
+  const rotated = await admin.rpc("rotate_quote_token", { p_quote_id: sentQuote.id });
+  const newToken = rotated.data;
+  check("editing issues a new token", Boolean(newToken) && newToken !== oldToken,
+    String(newToken));
+
+  const { data: afterRotate } = await admin
+    .from("quotes")
+    .select("status, sent_at, first_viewed_at, last_viewed_at, reminded_at, public_token")
+    .eq("id", sentQuote.id)
+    .single();
+  check("the quote drops back to draft, because nobody has seen this version",
+    afterRotate.status === "draft", afterRotate.status);
+  check("everything describing the previous version is cleared",
+    afterRotate.sent_at === null && afterRotate.first_viewed_at === null &&
+      afterRotate.last_viewed_at === null && afterRotate.reminded_at === null);
+
+  const oldLink = await visit(BROWSER_UA, `/q/${oldToken}`);
+  check("the old link is not a 404, it answers", oldLink.status === 200,
+    `status ${oldLink.status}`);
+  check("the old link says the quote was cancelled",
+    oldLink.body.includes("ההצעה בוטלה"));
+  check("the old link no longer shows any prices",
+    !oldLink.body.includes("1,000.00"));
+
+  const newLink = await visit(BROWSER_UA, `/q/${newToken}`);
+  check("the new link shows the quote", newLink.status === 200 &&
+    newLink.body.includes("1,000.00"), `status ${newLink.status}`);
+
+  const anonRevoked = await anonClient.from("quote_revoked_tokens").select("token");
+  check("anonymous callers cannot list retired tokens",
+    (anonRevoked.data ?? []).length === 0,
+    `rows: ${(anonRevoked.data ?? []).length}`);
+
+  console.log("\n11. An approved quote is frozen");
+
+  const decided = await quoteFor(2000, false, 0);
+  await admin.rpc("record_quote_decision", {
+    p_token: decided.public_token,
+    p_decision: "approved",
+    p_signature_name: "Dana Levi",
+    p_ip: null,
+    p_reason: "",
+  });
+
+  const frozenRotate = await admin.rpc("rotate_quote_token", { p_quote_id: decided.id });
+  check("its link cannot be rotated", Boolean(frozenRotate.error),
+    frozenRotate.error ? "refused" : "rotation unexpectedly succeeded");
+
+  const frozenEdit = await admin
+    .from("quotes")
+    .update({ notes: "changed after approval" })
+    .eq("id", decided.id)
+    .select();
+  check("its contents cannot be rewritten, even with the service key",
+    Boolean(frozenEdit.error),
+    frozenEdit.error ? "refused by the database" : "update unexpectedly succeeded");
+
+  const { data: stillIntact } = await admin
+    .from("quotes")
+    .select("status, total, notes, public_token")
+    .eq("id", decided.id)
+    .single();
+  check("the approved quote is exactly as the client left it",
+    stillIntact.status === "approved" && Number(stillIntact.total) === 2000 &&
+      stillIntact.public_token === decided.public_token);
+
+  const approvedLink = await visit(BROWSER_UA, `/q/${decided.public_token}`);
+  check("the client's link still works after approval",
+    approvedLink.status === 200 && approvedLink.body.includes("ההצעה אושרה"),
+    `status ${approvedLink.status}`);
 }
 
 let exitCode = 0;

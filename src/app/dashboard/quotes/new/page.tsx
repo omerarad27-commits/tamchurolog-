@@ -5,7 +5,7 @@ import { requireBusiness } from "@/lib/auth";
 import { defaultChargesVat, toBusinessType } from "@/lib/business-type";
 import type { Client } from "@/lib/types";
 
-import { QuoteBuilder } from "./quote-builder";
+import { QuoteBuilder } from "../quote-builder";
 
 export const metadata: Metadata = {
   title: "הצעה חדשה | תמחורולוג",

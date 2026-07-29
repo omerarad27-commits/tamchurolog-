@@ -13,13 +13,26 @@ import type { Client } from "@/lib/types";
 import { EMPTY_FORM_STATE } from "@/lib/validation";
 import { formatVatRate, splitVat, VAT_RATE } from "@/lib/vat";
 
-import { createQuoteAction } from "../actions";
+import { createQuoteAction, updateQuoteAction } from "./actions";
 
 type DraftLine = {
   key: string;
   description: string;
   quantity: string;
   unitPrice: string;
+};
+
+/** Values an existing quote is loaded with when editing. */
+export type QuoteDraft = {
+  id: string;
+  clientId: string;
+  validUntil: string;
+  notes: string;
+  withVat: boolean;
+  pricesIncludeVat: boolean;
+  /** Whether a link for this quote is already in a client's hands. */
+  wasSent: boolean;
+  lines: { description: string; quantity: string; unitPrice: string }[];
 };
 
 const NEW_CLIENT = "__new__";
@@ -35,6 +48,14 @@ function emptyLine(): DraftLine {
   };
 }
 
+function linesFromDraft(draft: QuoteDraft | undefined): DraftLine[] {
+  if (!draft || draft.lines.length === 0) return [emptyLine()];
+  return draft.lines.map((line) => {
+    keyCounter += 1;
+    return { key: `line-${keyCounter}`, ...line };
+  });
+}
+
 function toNumber(value: string): number {
   const parsed = Number(value.trim().replace(",", "."));
   return Number.isFinite(parsed) ? parsed : 0;
@@ -46,24 +67,31 @@ export function QuoteBuilder({
   defaultNotes,
   businessType,
   defaultWithVat,
+  draft,
 }: {
   clients: Client[];
   defaultValidUntil: string;
   defaultNotes: string;
   businessType: BusinessType;
   defaultWithVat: boolean;
+  /** Present when editing an existing quote. */
+  draft?: QuoteDraft;
 }) {
+  const isEdit = Boolean(draft);
+
   const [state, formAction] = useActionState(
-    createQuoteAction,
+    isEdit ? updateQuoteAction : createQuoteAction,
     EMPTY_FORM_STATE,
   );
 
   const [clientId, setClientId] = useState(
-    clients.length === 1 ? clients[0].id : "",
+    draft?.clientId ?? (clients.length === 1 ? clients[0].id : ""),
   );
-  const [lines, setLines] = useState<DraftLine[]>(() => [emptyLine()]);
-  const [withVat, setWithVat] = useState(defaultWithVat);
-  const [pricesIncludeVat, setPricesIncludeVat] = useState(false);
+  const [lines, setLines] = useState<DraftLine[]>(() => linesFromDraft(draft));
+  const [withVat, setWithVat] = useState(draft?.withVat ?? defaultWithVat);
+  const [pricesIncludeVat, setPricesIncludeVat] = useState(
+    draft?.pricesIncludeVat ?? false,
+  );
   const clientSelectId = useId();
 
   const updateLine = (key: string, patch: Partial<DraftLine>) => {
@@ -106,6 +134,16 @@ export function QuoteBuilder({
   return (
     <form action={formAction} className="flex flex-col gap-5" noValidate>
       <input type="hidden" name="lines" value={JSON.stringify(lines)} />
+      {draft ? <input type="hidden" name="quoteId" value={draft.id} /> : null}
+
+      {/* The client may already be holding a link to this quote. Say so before
+          they change anything, not after. */}
+      {draft?.wasSent ? (
+        <Alert tone="info">
+          ההצעה כבר נשלחה ללקוח. שמירת שינויים תבטל את הקישור הקודם — מי שייכנס
+          אליו יראה שההצעה בוטלה — ותצטרך לשלוח את ההצעה המעודכנת מחדש.
+        </Alert>
+      ) : null}
 
       {/* ---------------------------------------------------------- client */}
       <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-5 shadow-sm">
@@ -127,7 +165,8 @@ export function QuoteBuilder({
                 {client.full_name}
               </option>
             ))}
-            <option value={NEW_CLIENT}>+ לקוח חדש</option>
+            {/* Quick-add is a creation-time convenience only. */}
+            {isEdit ? null : <option value={NEW_CLIENT}>+ לקוח חדש</option>}
           </select>
         </div>
 
@@ -368,14 +407,14 @@ export function QuoteBuilder({
           type="date"
           dir="ltr"
           className="text-start"
-          defaultValue={defaultValidUntil}
+          defaultValue={draft?.validUntil ?? defaultValidUntil}
         />
 
         <TextArea
           label="הערות ותנאים"
           name="notes"
           rows={4}
-          defaultValue={defaultNotes}
+          defaultValue={draft?.notes ?? defaultNotes}
           hint="נלקח מברירת המחדל בהגדרות. אפשר לשנות עבור ההצעה הזו."
         />
       </section>
@@ -383,8 +422,13 @@ export function QuoteBuilder({
       {state.error ? <Alert>{state.error}</Alert> : null}
 
       <div className="flex flex-col gap-2">
-        <SubmitButton pendingLabel="שומר…">שמירה כטיוטה</SubmitButton>
-        <ButtonLink href="/dashboard" variant="secondary">
+        <SubmitButton pendingLabel="שומר…">
+          {isEdit ? "שמירת השינויים" : "שמירה כטיוטה"}
+        </SubmitButton>
+        <ButtonLink
+          href={draft ? `/dashboard/quotes/${draft.id}` : "/dashboard"}
+          variant="secondary"
+        >
           ביטול
         </ButtonLink>
       </div>

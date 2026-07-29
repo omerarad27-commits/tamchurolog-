@@ -88,6 +88,15 @@ export type QuoteLineItem = {
   sort_order: number;
 };
 
+/**
+ * A quote can be edited until the client decides. After that its contents are
+ * frozen: the approval refers to specific numbers, and changing them
+ * afterwards would rewrite what someone agreed to.
+ */
+export function isQuoteEditable(status: QuoteStatus): boolean {
+  return status !== "approved" && status !== "declined";
+}
+
 /** A quote joined with the client it belongs to, as shown in lists. */
 export type QuoteWithClient = Quote & {
   clients: Pick<Client, "id" | "full_name" | "phone"> | null;

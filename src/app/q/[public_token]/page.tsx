@@ -7,10 +7,15 @@ import { after } from "next/server";
 import { clientIpFromHeaders, isLinkPreviewBot } from "@/lib/bots";
 import { formatDate, formatDateTime, formatILS, formatQuantity } from "@/lib/format";
 import { normalizeIsraeliPhone } from "@/lib/phone";
-import { loadPublicQuote, recordQuoteView } from "@/lib/public-quote";
+import {
+  isRevokedToken,
+  loadPublicQuote,
+  recordQuoteView,
+} from "@/lib/public-quote";
 import { formatVatRate } from "@/lib/vat";
 
 import { QuoteDecision } from "./quote-decision";
+import { RevokedQuote } from "./revoked";
 
 export async function generateMetadata({
   params,
@@ -18,7 +23,9 @@ export async function generateMetadata({
   const { public_token } = await params;
   const quote = await loadPublicQuote(public_token);
 
-  if (!quote) return { title: "הצעת מחיר" };
+  if (!quote) {
+    return { title: "הצעת מחיר", robots: { index: false, follow: false } };
+  }
 
   return {
     title: `הצעת מחיר מ${quote.business.name}`,
@@ -37,7 +44,11 @@ export default async function PublicQuotePage({
   const { public_token } = await params;
   const quote = await loadPublicQuote(public_token);
 
-  if (!quote) notFound();
+  if (!quote) {
+    // A link the owner retired by editing, rather than one that never existed.
+    if (await isRevokedToken(public_token)) return <RevokedQuote />;
+    notFound();
+  }
 
   const requestHeaders = await headers();
   const userAgent = requestHeaders.get("user-agent");
@@ -46,7 +57,7 @@ export default async function PublicQuotePage({
   // fetch must never count as the client opening the quote.
   if (!isLinkPreviewBot(userAgent)) {
     const ip = clientIpFromHeaders(requestHeaders);
-    after(() => recordQuoteView(quote.id, ip, userAgent));
+    after(() => recordQuoteView(public_token, ip, userAgent));
   }
 
   const businessPhone = quote.business.phone

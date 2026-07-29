@@ -44,6 +44,26 @@ export type PublicQuote = {
   }[];
 };
 
+/**
+ * True when this token used to be valid and was retired by an edit.
+ *
+ * Answering a revoked link with a 404 would read as a broken link, and invite
+ * the client to fall back on the screenshot they took of the old prices. A
+ * clear "this was cancelled" tells them to expect a new one.
+ */
+export async function isRevokedToken(token: string): Promise<boolean> {
+  if (!TOKEN_PATTERN.test(token)) return false;
+
+  const supabase = createSupabaseAdminClient();
+  const { data } = await supabase
+    .from("quote_revoked_tokens")
+    .select("id")
+    .eq("token", token)
+    .maybeSingle();
+
+  return Boolean(data);
+}
+
 export async function loadPublicQuote(
   token: string,
 ): Promise<PublicQuote | null> {
@@ -112,15 +132,20 @@ export async function loadPublicQuote(
 /**
  * Records one view. Runs through a security-definer function so the insert and
  * the status transition happen together.
+ *
+ * Keyed on the token rather than the quote id on purpose. This write happens
+ * after the response is sent, and if the owner edits the quote in the meantime
+ * the token is rotated; matching on the token means a late view through a
+ * retired link updates nothing instead of marking a fresh draft as viewed.
  */
 export async function recordQuoteView(
-  quoteId: string,
+  token: string,
   ipAddress: string | null,
   userAgent: string | null,
 ): Promise<void> {
   const supabase = createSupabaseAdminClient();
   await supabase.rpc("record_quote_view", {
-    p_quote_id: quoteId,
+    p_token: token,
     p_ip_address: ipAddress,
     p_user_agent: userAgent?.slice(0, 500) ?? null,
   });

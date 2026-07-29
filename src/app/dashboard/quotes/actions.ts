@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { requireBusiness } from "@/lib/auth";
 import { normalizeIsraeliPhone } from "@/lib/phone";
+import { isQuoteEditable } from "@/lib/types";
 import type { FormState } from "@/lib/validation";
 import { VAT_RATE } from "@/lib/vat";
 
@@ -189,6 +190,111 @@ export async function createQuoteAction(
 
   revalidatePath("/dashboard");
   redirect(`/dashboard/quotes/${quote.id}`);
+}
+
+/**
+ * Saves changes to an existing quote.
+ *
+ * The delicate part is not the edit, it is the link already sitting in the
+ * client's WhatsApp. If the quote has been sent, that link must stop showing
+ * the old numbers the moment they change, so the token is rotated and the old
+ * one starts answering "this quote was cancelled". The quote drops back to
+ * draft, because what the owner just produced is a version nobody has seen.
+ *
+ * A draft has no link in anyone's hands, so it keeps its token.
+ */
+export async function updateQuoteAction(
+  _previousState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const { supabase, business } = await requireBusiness();
+
+  const quoteId = String(formData.get("quoteId") ?? "");
+  if (!quoteId) return { error: "ההצעה לא נמצאה.", success: null };
+
+  const { data: existing } = await supabase
+    .from("quotes")
+    .select("id, status, sent_at")
+    .eq("id", quoteId)
+    .eq("business_id", business.id)
+    .maybeSingle();
+
+  if (!existing) return { error: "ההצעה לא נמצאה.", success: null };
+
+  if (!isQuoteEditable(existing.status)) {
+    return {
+      error:
+        "אי אפשר לערוך הצעה שהלקוח כבר הכריע לגביה. אפשר ליצור הצעה חדשה במקום.",
+      success: null,
+    };
+  }
+
+  const parsed = parseLines(String(formData.get("lines") ?? "[]"));
+  if ("error" in parsed) return { error: parsed.error, success: null };
+
+  const clientId = String(formData.get("clientId") ?? "").trim();
+  if (!clientId || clientId === "__new__") {
+    // Quick-add is a creation-time convenience; editing uses the client list.
+    return { error: "יש לבחור לקוח עבור ההצעה.", success: null };
+  }
+
+  const withVat = formData.get("withVat") === "on";
+
+  const { error: updateError } = await supabase
+    .from("quotes")
+    .update({
+      client_id: clientId,
+      valid_until: String(formData.get("validUntil") ?? "").trim() || null,
+      notes: String(formData.get("notes") ?? "").trim() || null,
+      vat_rate: withVat ? VAT_RATE : 0,
+      prices_include_vat:
+        withVat && formData.get("priceMode") === "inclusive",
+    })
+    .eq("id", quoteId)
+    .eq("business_id", business.id);
+
+  if (updateError) {
+    return { error: "שמירת השינויים נכשלה. נסה שוב.", success: null };
+  }
+
+  /*
+   * Replace the line items wholesale. Diffing them would buy nothing: the
+   * builder hands back the complete list every time, and the totals trigger
+   * recomputes from whatever ends up in the table.
+   */
+  await supabase.from("quote_line_items").delete().eq("quote_id", quoteId);
+
+  const { error: itemsError } = await supabase.from("quote_line_items").insert(
+    parsed.lines.map((line, index) => ({
+      quote_id: quoteId,
+      description: line.description,
+      quantity: line.quantity,
+      unit_price: line.unit_price,
+      sort_order: index,
+    })),
+  );
+
+  if (itemsError) {
+    return { error: "שמירת הפריטים נכשלה. נסה שוב.", success: null };
+  }
+
+  // Only now, once the new contents are safely stored, retire the old link.
+  if (existing.sent_at || existing.status !== "draft") {
+    const { error: rotateError } = await supabase.rpc("rotate_quote_token", {
+      p_quote_id: quoteId,
+    });
+    if (rotateError) {
+      return {
+        error:
+          "השינויים נשמרו, אך ביטול הקישור הישן נכשל. רענן ונסה לערוך שוב לפני שליחה.",
+        success: null,
+      };
+    }
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/quotes/${quoteId}`);
+  redirect(`/dashboard/quotes/${quoteId}`);
 }
 
 /**
