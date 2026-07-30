@@ -123,6 +123,86 @@ async function run() {
     logoImg.includes("/_next/image"),
   );
 
+  /* ------------------------------------------------ the sharing card */
+  const meta = (prop) =>
+    html.match(
+      new RegExp(`<meta[^>]+(?:property|name)="${prop}"[^>]+content="([^"]*)"`),
+    )?.[1] ??
+    html.match(
+      new RegExp(`<meta[^>]+content="([^"]*)"[^>]+(?:property|name)="${prop}"`),
+    )?.[1] ??
+    null;
+
+  /*
+   * The one that must never regress. A quote in a search index is a worse
+   * privacy failure than any missing preview card, so it is asserted before
+   * anything about the card itself.
+   */
+  const robots = meta("robots");
+  check(
+    "noindex, nofollow survived the new metadata",
+    Boolean(robots && robots.includes("noindex") && robots.includes("nofollow")),
+    robots ?? "absent",
+  );
+
+  check("og:title is set", Boolean(meta("og:title")), meta("og:title") ?? "");
+  check(
+    "og:title names the business",
+    (meta("og:title") ?? "").includes("מיזוג אוויר כהן"),
+  );
+  check("og:description is set", Boolean(meta("og:description")));
+  check("og:image is set", Boolean(meta("og:image")), meta("og:image") ?? "");
+  check(
+    "twitter:card is a large summary",
+    meta("twitter:card") === "summary_large_image",
+    meta("twitter:card") ?? "absent",
+  );
+
+  // The decision was to keep the price off the preview, so it must not have
+  // crept into any of the tags. 2400 + 480 = 2880.
+  const cardText = [meta("og:title"), meta("og:description"), meta("twitter:description")]
+    .filter(Boolean)
+    .join(" ");
+  check(
+    "no amount leaked into the card text",
+    !/\d[\d,.]{2,}/.test(cardText),
+    cardText.slice(0, 80),
+  );
+
+  const ogImageUrl = meta("og:image");
+  if (ogImageUrl) {
+    check(
+      "og:image is an absolute URL",
+      ogImageUrl.startsWith("http"),
+      "WhatsApp will not resolve a relative one",
+    );
+    // metadataBase pins it to the production host, which is right for the tag
+    // and wrong for fetching it here, so the path is replayed against BASE.
+    const asPath = ogImageUrl.startsWith("http")
+      ? new URL(ogImageUrl).pathname + new URL(ogImageUrl).search
+      : ogImageUrl;
+    const imgRes = await fetch(`${BASE}${asPath}`);
+    const bytes = Buffer.from(await imgRes.arrayBuffer());
+    check("the card image responds 200", imgRes.status === 200, String(imgRes.status));
+    check(
+      "it is a real PNG",
+      bytes.subarray(0, 8).toString("hex") === "89504e470d0a1a0a",
+      bytes.subarray(0, 8).toString("hex"),
+    );
+    check(
+      "it is 1200x630",
+      bytes.readUInt32BE(16) === 1200 && bytes.readUInt32BE(20) === 630,
+      `${bytes.readUInt32BE(16)}x${bytes.readUInt32BE(20)}`,
+    );
+  }
+
+  // A token that does not exist must still be noindex and must still answer.
+  const missingHtml = await (await fetch(`${BASE}/q/${"0".repeat(32)}`)).text();
+  check(
+    "an unknown token is still noindex",
+    /noindex/.test(missingHtml),
+  );
+
   /* ------------------------------------- what the browser actually does */
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 390, height: 780 } });

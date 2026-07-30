@@ -16,9 +16,34 @@ const rubik = Rubik({
   display: "swap",
 });
 
+const SITE_NAME = "תמחורולוג";
+const SITE_DESCRIPTION =
+  "הצעות מחיר לבעלי מקצוע — שליחה בוואטסאפ, מעקב אחרי צפיות וסגירת עסקאות.";
+
 export const metadata: Metadata = {
-  title: "תמחורולוג",
-  description: "הצעות מחיר לבעלי מקצוע — שליחה בוואטסאפ, מעקב אחרי צפיות וסגירת עסקאות.",
+  /*
+   * Everything metadata resolves — og:url, canonical, the generated image URLs
+   * — is absolute, and without a base Next has to guess the origin. Vercel
+   * gives every deployment its own hostname, so the guess would pin cards and
+   * canonicals to whichever preview build happened to render them.
+   */
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://tamchurolog.vercel.app",
+  ),
+  title: SITE_NAME,
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    locale: "he_IL",
+    siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export const viewport: Viewport = {
