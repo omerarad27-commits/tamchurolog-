@@ -54,16 +54,23 @@ export default async function StatsPage() {
   const stats = computeQuoteStats((data ?? []) as StatsInput[]);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-bold">סיכום</h1>
+    /*
+      Stacked on a phone, a grid of figures once there is room. Six blocks that
+      each answer one question read better side by side than as a column the
+      owner has to scroll through to compare two numbers.
+
+      items-start so a taller block does not stretch its neighbours to match.
+    */
+    <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:items-start lg:grid-cols-3">
+      <div className="md:col-span-2 lg:col-span-3">
+        <h1>סיכום</h1>
         <p className="mt-1 text-sm text-muted">
           המספרים מתייחסים לכל ההצעות שיצרת עד היום.
         </p>
       </div>
 
       {error ? (
-        <p className="rounded-tile border border-danger/30 bg-danger-soft px-3 py-2.5 text-sm text-danger">
+        <p className="rounded-tile border border-danger/30 bg-danger-soft px-3 py-2.5 text-sm text-danger md:col-span-2 lg:col-span-3">
           טעינת הנתונים נכשלה. רענן את הדף ונסה שוב.
         </p>
       ) : null}
