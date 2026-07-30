@@ -62,6 +62,20 @@
      puts its label and its caret at opposite ends of the screen, and nothing
      about a wide window makes a business name longer. */
   --container-form: 44rem;
+
+  /* The unsaved-changes notice. Fast and small on purpose: long enough to read
+     as "something appeared", short enough that it never delays the field the
+     owner is still typing in. Always paired with motion-safe: at the call site. */
+  --animate-notice-in: notice-in 180ms ease-out;
+}
+
+/* Only a from-state, so the resting style stays whatever the element already is
+   and this can never fight the utilities on it. */
+@keyframes notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.375rem);
+  }
 }
 
 body {

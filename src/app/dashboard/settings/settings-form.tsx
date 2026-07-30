@@ -12,7 +12,7 @@ import { toBusinessType } from "@/lib/business-type";
 import { formatPhoneForDisplay } from "@/lib/phone";
 import { formatBytes, shrinkImage } from "@/lib/shrink-image";
 import type { Business } from "@/lib/types";
-import { EMPTY_FORM_STATE } from "@/lib/validation";
+import { EMPTY_FORM_STATE, type FormState } from "@/lib/validation";
 
 import { updateBusinessAction } from "./actions";
 
@@ -28,6 +28,31 @@ export function SettingsForm({ business }: { business: Business }) {
   const [fileError, setFileError] = useState<string | null>(null);
   const [fileNote, setFileNote] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+
+  /*
+   * Whether anything has been edited since the last successful save.
+   *
+   * Every field here is uncontrolled, so there are no values to diff against.
+   * What we can rely on is that they are all native inputs, and a native change
+   * event bubbles: one handler on the <form> sees the text fields, the VAT
+   * radios, the remove-logo checkbox and the file picker without a single field
+   * needing to know this flag exists.
+   *
+   * Derived rather than reset in an effect. useActionState hands back a fresh
+   * object identity on every submit, so an edit only has to remember which
+   * result it was made against, and the answer falls out: the notice stands
+   * until some *later* result comes back successful. A failed save leaves it
+   * up, because the changes really are still unsaved.
+   *
+   * Deliberately not an is-this-different-from-the-server check. Typing a
+   * character and deleting it again leaves the notice up; the failure that
+   * matters here is leaving with unsaved changes, and offering a save that
+   * turns out to be a no-op costs nothing.
+   */
+  const [editedAgainst, setEditedAgainst] = useState<FormState | null>(null);
+  const savedSinceEdit =
+    editedAgainst !== null && state !== editedAgainst && state.success !== null;
+  const dirty = editedAgainst !== null && !savedSinceEdit;
 
   /**
    * Shrinks the picked image, then puts the smaller file back into the input so
@@ -79,7 +104,37 @@ export function SettingsForm({ business }: { business: Business }) {
   };
 
   return (
-    <form action={formAction} className="flex flex-col gap-4" noValidate>
+    <form
+      action={formAction}
+      /* Fires on every keystroke, always with the same object until the next
+         submit, so React bails out of all but the first re-render. */
+      onChange={() => setEditedAgainst(state)}
+      className="flex flex-col gap-4"
+      noValidate
+    >
+      {dirty ? (
+        /*
+          Sticky rather than inline, because the message points at a button that
+          is off screen. The whole reason for the notice is the owner who changed
+          the business name, scrolled down to read the default terms and never
+          learned that nothing was saved yet — so it has to stay in view for
+          exactly as long as that is true.
+
+          top-0 inside the form means it releases on its own once the form's
+          bottom edge scrolls past, which is the moment the save button it is
+          pointing at has arrived.
+        */
+        <div className="sticky top-0 z-10 motion-safe:animate-notice-in">
+          <Alert tone="warning">
+            <span
+              aria-hidden="true"
+              className="me-2 inline-block h-2 w-2 shrink-0 rounded-full bg-warning align-middle"
+            />
+            לחץ &rdquo;שמירה&ldquo; בסוף העמוד כדי לשמור שינויים
+          </Alert>
+        </div>
+      ) : null}
+
       <TextField
         label="שם העסק"
         name="name"
@@ -170,7 +225,12 @@ export function SettingsForm({ business }: { business: Business }) {
       </div>
 
       {state.error ? <Alert>{state.error}</Alert> : null}
-      {state.success ? <Alert tone="success">{state.success}</Alert> : null}
+      {/* Gated on the notice, not just on state: once a new edit is pending, a
+          leftover "saved" from the previous save contradicts the banner at the
+          top of the form and is the more misleading of the two. */}
+      {state.success && !dirty ? (
+        <Alert tone="success">{state.success}</Alert>
+      ) : null}
 
       <SubmitButton
         pendingLabel="שומר…"

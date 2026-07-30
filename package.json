@@ -15,7 +15,8 @@
     "stats": "node --env-file=.env.local scripts/show-stats.mjs",
     "shoot": "node --env-file=.env.local scripts/shoot.mjs",
     "cls": "node --env-file=.env.local scripts/cls.mjs",
-    "verify:auth": "node --env-file=.env.local scripts/verify-auth.mjs"
+    "verify:auth": "node --env-file=.env.local scripts/verify-auth.mjs",
+    "verify:settings": "node --env-file=.env.local scripts/verify-settings-notice.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
