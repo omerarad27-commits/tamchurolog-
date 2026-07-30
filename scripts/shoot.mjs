@@ -36,6 +36,9 @@ const admin = createClient(supabaseUrl, serviceKey, {
 const VIEWPORTS = [
   { name: "375-phone", width: 375, height: 812 },
   { name: "768-tablet", width: 768, height: 1024 },
+  // Not one of the three the brief names. It is where a two-column grid is
+  // narrowest while still being two columns, so it is where one breaks.
+  { name: "1024-laptop", width: 1024, height: 768 },
   { name: "1440-desktop", width: 1440, height: 900 },
 ];
 

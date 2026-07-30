@@ -69,7 +69,7 @@ export default async function DashboardPage({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">הצעות מחיר</h1>
+        <h1>הצעות מחיר</h1>
         <ButtonLink href="/dashboard/quotes/new" size="sm">
           הצעה חדשה
         </ButtonLink>
@@ -83,8 +83,8 @@ export default async function DashboardPage({
 
       {/* Cold quotes come first: this section is the reason the app exists. */}
       {activeFilter === "all" && coldQuotes.length > 0 ? (
-        <section className="flex flex-col gap-3 rounded-card border border-warning/30 bg-warning-soft p-4">
-          <div>
+        <section className="flex flex-col gap-3 rounded-card border border-warning/30 bg-warning-soft p-4 lg:grid lg:grid-cols-2 lg:items-start">
+          <div className="lg:col-span-2">
             <h2 className="font-bold text-warning">
               צריך מעקב ({coldQuotes.length})
             </h2>
@@ -178,7 +178,10 @@ export default async function DashboardPage({
               אין הצעות בסטטוס הזה.
             </p>
           ) : (
-            <ul className="flex flex-col gap-2">
+            /* One column on a phone, two once the shell is wide enough that a
+               single row would be a name at one edge and a price at the other
+               with 700px of nothing between them. */
+            <ul className="grid gap-2 lg:grid-cols-2">
               {visibleQuotes.map((quote) => (
                 <li key={quote.id}>
                   <Link
