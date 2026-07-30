@@ -95,9 +95,9 @@ async function run() {
   const violations = [];
   await ctx.addInitScript(() =>
     document.addEventListener("securitypolicyviolation", (e) => {
-      const record = `${e.effectiveDirective} blocked ${e.blockedURI}`;
-      // eslint-disable-next-line no-console
-      console.error(`CSPVIOLATION ${record}`);
+      console.error(
+        `CSPVIOLATION ${e.effectiveDirective} blocked ${e.blockedURI}`,
+      );
     }),
   );
 

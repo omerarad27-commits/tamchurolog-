@@ -17,7 +17,8 @@
     "cls": "node --env-file=.env.local scripts/cls.mjs",
     "verify:auth": "node --env-file=.env.local scripts/verify-auth.mjs",
     "verify:settings": "node --env-file=.env.local scripts/verify-settings-notice.mjs",
-    "verify:csp": "node --env-file=.env.local scripts/verify-csp.mjs"
+    "verify:csp": "node --env-file=.env.local scripts/verify-csp.mjs",
+    "verify:redirect": "node --env-file=.env.local scripts/verify-redirect.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",

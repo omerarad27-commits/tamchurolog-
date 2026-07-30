@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { publicEnv } from "@/lib/env";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 import { AUTH_COOKIE_OPTIONS } from "@/lib/supabase/cookie-options";
 
 /** Routes that only make sense when signed out. */
@@ -165,9 +166,20 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user && AUTH_ROUTES.includes(pathname)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    url.search = "";
+    /*
+     * Honour the destination the user was already asking for.
+     *
+     * This used to send every signed-in visitor to the dashboard and drop
+     * ?next= on the floor, so following a deep link to a quote while already
+     * signed in landed on the dashboard and left the user to find it again.
+     * The value is still untrusted — it came from the query string — so it goes
+     * through the same check the sign-in action uses.
+     */
+    // Resolved against our own origin rather than assigned to .pathname, so a
+    // destination that carries its own query string survives intact instead of
+    // having its "?" percent-encoded into the path.
+    const target = safeRedirectPath(request.nextUrl.searchParams.get("next"));
+    const url = new URL(target, request.nextUrl.origin);
     const redirectResponse = NextResponse.redirect(url);
     redirectResponse.headers.set("Content-Security-Policy", csp);
     return redirectResponse;

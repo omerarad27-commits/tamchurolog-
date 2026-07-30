@@ -5,22 +5,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { toBusinessType } from "@/lib/business-type";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   MIN_PASSWORD_LENGTH,
   validateCredentials,
   type AuthFormState,
 } from "@/lib/validation";
-
-/**
- * Only same-origin paths are accepted, so a crafted ?next= cannot bounce a
- * freshly signed-in user to an external site.
- */
-function safeRedirectPath(value: FormDataEntryValue | null): string {
-  const path = typeof value === "string" ? value : "";
-  if (!path.startsWith("/") || path.startsWith("//")) return "/dashboard";
-  return path;
-}
 
 /** Supabase returns English error codes; the owner should never see them. */
 function hebrewAuthError(error: AuthError): string {
