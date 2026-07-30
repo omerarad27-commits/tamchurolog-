@@ -119,8 +119,21 @@ export default async function PublicQuotePage({
       </header>
 
       {quote.status === "approved" ? (
-        <section className="rounded-card border border-success/30 bg-success-soft p-5">
-          <h2 className="font-bold text-success">ההצעה אושרה</h2>
+        /*
+          A status message, not a document heading. It was an h2, and because it
+          sits above the quote card it announced itself before the page's only
+          h1, which leaves a screen reader navigating by heading to meet a level
+          two before a level one. role="status" is also the accurate description
+          of what this banner is.
+
+          text-xl rather than the h2 default of 1.3125rem: a 1px difference, and
+          the alternative was an arbitrary value.
+        */
+        <section
+          role="status"
+          className="rounded-card border border-success/30 bg-success-soft p-5"
+        >
+          <p className="text-xl font-bold text-success">ההצעה אושרה</p>
           <p className="mt-1 text-sm leading-relaxed">
             תודה! {quote.business.name} ייצור איתך קשר בקרוב.
           </p>
@@ -138,8 +151,11 @@ export default async function PublicQuotePage({
       ) : null}
 
       {quote.status === "declined" ? (
-        <section className="rounded-card border border-border bg-background p-5">
-          <h2 className="font-bold">תודה על התשובה</h2>
+        <section
+          role="status"
+          className="rounded-card border border-border bg-background p-5"
+        >
+          <p className="text-xl font-bold">תודה על התשובה</p>
           <p className="mt-1 text-sm leading-relaxed text-muted">
             נרשם אצלנו שההצעה אינה רלוונטית. אם תשנה/י את דעתך, אפשר לפנות ישירות
             ל{quote.business.name}.

@@ -93,6 +93,12 @@ export function QuoteBuilder({
     draft?.pricesIncludeVat ?? false,
   );
   const clientSelectId = useId();
+  /*
+   * Prefix for the per-line field ids. useId supplies a value that matches
+   * between the server and the client render; line.key identifies the row and
+   * survives reordering and deletion, which an array index would not.
+   */
+  const lineFieldPrefix = useId();
 
   const updateLine = (key: string, patch: Partial<DraftLine>) => {
     setLines((current) =>
@@ -222,8 +228,14 @@ export function QuoteBuilder({
 
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <label className="text-xs font-medium text-muted">כמות</label>
+                  <label
+                    htmlFor={`${lineFieldPrefix}-${line.key}-quantity`}
+                    className="text-xs font-medium text-muted"
+                  >
+                    כמות
+                  </label>
                   <input
+                    id={`${lineFieldPrefix}-${line.key}-quantity`}
                     value={line.quantity}
                     onChange={(event) =>
                       updateLine(line.key, { quantity: event.target.value })
@@ -234,10 +246,14 @@ export function QuoteBuilder({
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="text-xs font-medium text-muted">
+                  <label
+                    htmlFor={`${lineFieldPrefix}-${line.key}-unit-price`}
+                    className="text-xs font-medium text-muted"
+                  >
                     מחיר ליחידה
                   </label>
                   <input
+                    id={`${lineFieldPrefix}-${line.key}-unit-price`}
                     value={line.unitPrice}
                     onChange={(event) =>
                       updateLine(line.key, { unitPrice: event.target.value })
