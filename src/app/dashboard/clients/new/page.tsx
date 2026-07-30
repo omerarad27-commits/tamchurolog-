@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function NewClientPage() {
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex w-full max-w-form flex-col gap-5">
       <div>
         <Link
           href="/dashboard/clients"

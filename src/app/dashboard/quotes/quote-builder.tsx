@@ -132,7 +132,7 @@ export function QuoteBuilder({
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-5" noValidate>
+    <form action={formAction} className="flex w-full max-w-form flex-col gap-5" noValidate>
       <input type="hidden" name="lines" value={JSON.stringify(lines)} />
       {draft ? <input type="hidden" name="quoteId" value={draft.id} /> : null}
 

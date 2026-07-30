@@ -12,9 +12,9 @@ export default async function SettingsPage() {
   const { business } = await requireBusiness();
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex w-full max-w-form flex-col gap-5">
       <div>
-        <h1 className="text-2xl font-bold">הגדרות העסק</h1>
+        <h1>הגדרות העסק</h1>
         <p className="mt-1 text-sm text-muted">
           הפרטים האלה מופיעים ללקוחות שלך בכל הצעת מחיר.
         </p>

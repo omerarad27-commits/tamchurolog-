@@ -57,6 +57,11 @@
   /* The client's quote is a document, not an application screen. It stays at a
      reading width no matter how wide the window gets. */
   --container-document: 40rem;
+
+  /* Forms do not follow the shell. A single-line text input stretched to 940px
+     puts its label and its caret at opposite ends of the screen, and nothing
+     about a wide window makes a business name longer. */
+  --container-form: 44rem;
 }
 
 body {
