@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 import { requirePublicEnv } from "@/lib/env";
+import { AUTH_COOKIE_OPTIONS } from "@/lib/supabase/cookie-options";
 
 /**
  * Supabase client for Server Components, Server Actions and Route Handlers.
@@ -14,6 +15,7 @@ export async function createSupabaseServerClient() {
   const { supabaseUrl, supabaseAnonKey } = requirePublicEnv();
 
   return createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookieOptions: AUTH_COOKIE_OPTIONS,
     cookies: {
       getAll() {
         return cookieStore.getAll();

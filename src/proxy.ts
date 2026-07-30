@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { publicEnv } from "@/lib/env";
+import { AUTH_COOKIE_OPTIONS } from "@/lib/supabase/cookie-options";
 
 /** Routes that only make sense when signed out. */
 const AUTH_ROUTES = ["/login", "/signup"];
@@ -25,6 +26,9 @@ export async function proxy(request: NextRequest) {
     publicEnv.supabaseUrl,
     publicEnv.supabaseAnonKey,
     {
+      // Must match server.ts. This is the path that rewrites the cookie on
+      // every refresh, so flags set only there would be undone here.
+      cookieOptions: AUTH_COOKIE_OPTIONS,
       cookies: {
         getAll() {
           return request.cookies.getAll();
