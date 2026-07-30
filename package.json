@@ -12,7 +12,8 @@
     "verify:public": "node --env-file=.env.local scripts/verify-public-quote.mjs",
     "seed:demo": "node --env-file=.env.local scripts/seed-demo-quotes.mjs",
     "accounts": "node --env-file=.env.local scripts/list-accounts.mjs",
-    "stats": "node --env-file=.env.local scripts/show-stats.mjs"
+    "stats": "node --env-file=.env.local scripts/show-stats.mjs",
+    "shoot": "node --env-file=.env.local scripts/shoot.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
@@ -29,6 +30,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
+    "playwright": "^1.62.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
