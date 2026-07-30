@@ -151,8 +151,12 @@ export default async function PublicQuotePage({
       <section className="overflow-hidden rounded-card border border-border bg-surface shadow-sm">
         <div className="border-b border-border px-5 py-4">
           <h1 className="text-2xl font-bold md:text-3xl">הצעת מחיר</h1>
-          <p className="numeric mt-0.5 text-sm text-muted">
-            #{quote.quoteNumber} · {formatDate(quote.issuedAt)}
+          {/* The digits are isolated, the line is not. Putting .numeric on the
+              paragraph turned the whole line LTR and left-aligned it under a
+              right-aligned title. */}
+          <p className="mt-0.5 text-sm text-muted">
+            <span className="numeric">#{quote.quoteNumber}</span> ·{" "}
+            <span className="numeric">{formatDate(quote.issuedAt)}</span>
           </p>
           {quote.clientName ? (
             <p className="mt-2 text-sm">

@@ -195,9 +195,12 @@ export default async function DashboardPage({
                         </p>
                         <StatusBadge status={quote.status} />
                       </div>
-                      <p className="numeric mt-0.5 text-sm text-muted">
-                        הצעה #{quote.quote_number} ·{" "}
-                        {formatDate(quote.sent_at ?? quote.issued_at)}
+                      <p className="mt-0.5 text-sm text-muted">
+                        הצעה <span className="numeric">#{quote.quote_number}</span>{" "}
+                        ·{" "}
+                        <span className="numeric">
+                          {formatDate(quote.sent_at ?? quote.issued_at)}
+                        </span>
                       </p>
                     </div>
                     <span className="numeric shrink-0 font-bold">
