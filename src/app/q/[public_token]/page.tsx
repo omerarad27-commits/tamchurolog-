@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
@@ -325,18 +326,19 @@ export default async function PublicQuotePage({
         jump to it or past it.
 
         The name is also the only mention of the product a client ever sees, so
-        it links home. rel="noopener" is redundant against our own COOP header
-        and is there for the browser that ignores it.
+        it links home.
       */}
       <footer className="pt-2 text-center text-xs text-muted">
         נשלח באמצעות{" "}
-        <a
+        <Link
           href="/"
-          rel="noopener"
+          // Nothing on this page should spend the client's data on a page they
+          // have not asked for, and almost none of them will follow this.
+          prefetch={false}
           className="font-semibold text-brand hover:underline"
         >
           תמחורולוג
-        </a>
+        </Link>
       </footer>
     </main>
   );
