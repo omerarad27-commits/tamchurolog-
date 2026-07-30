@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 
+import { toVisualOrder } from "@/lib/bidi";
 import {
   BACKDROP,
   BRAND,
@@ -15,7 +16,12 @@ export const alt = "תמחורולוג — הצעות מחיר לבעלי מקצ
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
 
-/** The card for the landing page itself, which had no share image at all. */
+/**
+ * The card for the landing page itself, which had no share image at all.
+ *
+ * Every string drawn here goes through toVisualOrder: Satori has no bidi
+ * algorithm, so Hebrew handed to it in logical order comes out backwards.
+ */
 export default async function Image() {
   const fonts = await loadOgFonts();
 
@@ -61,7 +67,7 @@ export default async function Image() {
             ת
           </div>
           <div style={{ display: "flex", fontSize: 54, fontWeight: 700, color: INK }}>
-            תמחורולוג
+            {toVisualOrder("תמחורולוג")}
           </div>
         </div>
 
@@ -75,7 +81,7 @@ export default async function Image() {
             color: INK,
           }}
         >
-          הצעות מחיר לבעלי מקצוע
+          {toVisualOrder("הצעות מחיר לבעלי מקצוע")}
         </div>
 
         <div
@@ -88,7 +94,7 @@ export default async function Image() {
             color: MUTED,
           }}
         >
-          שליחה בוואטסאפ, מעקב אחרי צפיות וסגירת עסקאות
+          {toVisualOrder("שליחה בוואטסאפ, מעקב אחרי צפיות וסגירת עסקאות")}
         </div>
       </div>
     ),

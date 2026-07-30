@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 
+import { toVisualOrder } from "@/lib/bidi";
 import {
   BACKDROP,
   BRAND,
@@ -29,12 +30,15 @@ export const contentType = OG_CONTENT_TYPE;
  * to do: prove the link came from a real tradesperson rather than a stranger,
  * so it gets opened at all.
  *
- * On direction: Satori ignores the `direction` property, so RTL here cannot be
- * declared, only built. Glyphs inside a Hebrew run come out correct on their
- * own — checked against a browser rendering the same string in the same font
- * rather than by eye, because reading RTL text in visual order makes correct
- * output look reversed. What Satori will not do is start the boxes from the
- * right, hence row-reverse and flex-end.
+ * On direction: Satori has no bidi algorithm at all. It ignores `direction`,
+ * `textAlign` and RLM marks, and lays glyphs out in the order given, which
+ * draws Hebrew backwards. So RTL here is built rather than declared, in two
+ * halves: row-reverse and flex-end put the boxes in the right places, and
+ * toVisualOrder reorders the characters inside each one.
+ *
+ * Every string Satori draws goes through toVisualOrder. Nothing a browser
+ * lays out ever does — the meta tags above are written in logical order and
+ * left alone, because WhatsApp reorders those itself.
  */
 export default async function Image({
   params,
@@ -102,7 +106,7 @@ export default async function Image({
               overflow: "hidden",
             }}
           >
-            {businessName}
+            {toVisualOrder(businessName)}
           </div>
         </div>
 
@@ -124,7 +128,7 @@ export default async function Image({
               fontWeight: 700,
             }}
           >
-            <div style={{ display: "flex" }}>הצעת מחיר</div>
+            <div style={{ display: "flex" }}>{toVisualOrder("הצעת מחיר")}</div>
             {quoteNumber ? (
               <div style={{ display: "flex", color: MUTED }}>
                 {`#${quoteNumber}`}
@@ -132,7 +136,7 @@ export default async function Image({
             ) : null}
           </div>
           <div style={{ display: "flex", fontSize: 40, color: MUTED }}>
-            לחצו לצפייה בפירוט המלא ולאישור ההצעה
+            {toVisualOrder("לחצו לצפייה בפירוט המלא ולאישור ההצעה")}
           </div>
         </div>
 
@@ -155,7 +159,7 @@ export default async function Image({
               background: BRAND,
             }}
           />
-          נשלח באמצעות תמחורולוג
+          {toVisualOrder("נשלח באמצעות תמחורולוג")}
         </div>
       </div>
     ),
