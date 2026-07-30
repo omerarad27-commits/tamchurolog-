@@ -215,17 +215,33 @@ async function run() {
     }
   });
 
+  /*
+   * Timed from when the HTML arrives, not from navigation.
+   *
+   * Measuring against navigation start meant a cold serverless start counted
+   * against the logo: the same page scored +3186ms cold and +776ms warm, which
+   * says something about Vercel's boot time and nothing about how the image is
+   * queued. What the acceptance criterion is actually asking is whether the
+   * browser goes after the logo as soon as it has the markup.
+   */
+  let documentArrived = null;
+  page.on("response", (r) => {
+    if (documentArrived === null && r.request().resourceType() === "document") {
+      documentArrived = Date.now();
+    }
+  });
+
   // Empty cache, as the acceptance criterion asks.
   await ctx.clearCookies();
-  const started = Date.now();
   await page.goto(url, { waitUntil: "networkidle" });
 
   const logoReq = imageRequests.find((r) => r.url.includes("/_next/image"));
   check("the logo was requested", Boolean(logoReq));
+  const afterHtml = logoReq && documentArrived ? logoReq.started - documentArrived : null;
   check(
     "it is requested in the first wave",
-    logoReq ? logoReq.started - started < 1500 : false,
-    logoReq ? `+${logoReq.started - started}ms` : "never",
+    afterHtml !== null && afterHtml < 1500,
+    afterHtml !== null ? `+${afterHtml}ms after the HTML` : "never",
   );
 
   // The flash of an empty square: is the logo painted by the time the
