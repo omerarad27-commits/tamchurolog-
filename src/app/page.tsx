@@ -2,8 +2,26 @@ import { ButtonLink } from "@/components/ui/button";
 import { getUser } from "@/lib/auth";
 import { checkSupabaseHealth } from "@/lib/supabase/health";
 
+/*
+ * The connection card is a setup aid, not a feature.
+ *
+ * In development it earns its place: the missing-env branch names exactly which
+ * variables are unset, which is the difference between a five second fix and an
+ * afternoon. In production it printed the Supabase project host on a page any
+ * visitor can open, and it cost a network round trip on the landing page to say
+ * something no visitor needs to know.
+ *
+ * The URL and the anon key are public by design and RLS is the real boundary,
+ * so this was untidiness rather than a leak. It still has no business being
+ * rendered to strangers.
+ */
 export default async function HomePage() {
-  const [health, user] = await Promise.all([checkSupabaseHealth(), getUser()]);
+  const showHealth = process.env.NODE_ENV !== "production";
+
+  const [health, user] = await Promise.all([
+    showHealth ? checkSupabaseHealth() : null,
+    getUser(),
+  ]);
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-5 px-5 py-12">
@@ -43,7 +61,7 @@ export default async function HomePage() {
         )}
       </section>
 
-      <SupabaseHealthCard health={health} />
+      {health ? <SupabaseHealthCard health={health} /> : null}
     </main>
   );
 }
