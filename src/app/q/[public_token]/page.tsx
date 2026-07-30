@@ -89,11 +89,29 @@ export default async function PublicQuotePage({
       {/* ------------------------------------------------------- business */}
       <header className="flex items-center gap-3">
         {quote.business.logoUrl ? (
+          /*
+            The largest thing painted above the fold, so it decides the LCP.
+            next/image lazy loads by default, which is right almost everywhere
+            and wrong here: the client lands on a pricing document and the first
+            thing they see is an empty square where the business's logo belongs,
+            filled in a moment later.
+
+            eager + high rather than the `priority` prop, which Next 16
+            deprecated, and rather than `preload`, which the docs say not to
+            combine with fetchPriority. The image sits in the first element of
+            the body, so the preload scanner finds it immediately anyway; what
+            it was missing was permission to load and a place in the queue.
+
+            The dashboard header logo is deliberately left lazy. It sits behind
+            a login, in a context where nobody is forming a first impression.
+          */
           <Image
             src={quote.business.logoUrl}
             alt={quote.business.name}
             width={56}
             height={56}
+            loading="eager"
+            fetchPriority="high"
             className="h-14 w-14 shrink-0 rounded-tile border border-border bg-surface object-contain"
           />
         ) : (
