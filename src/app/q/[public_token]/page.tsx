@@ -171,9 +171,14 @@ export default async function PublicQuotePage({
             <li key={item.id} className="flex items-start gap-3 px-5 py-3.5">
               <div className="min-w-0 flex-1">
                 <p className="font-medium leading-snug">{item.description}</p>
-                <p className="numeric mt-0.5 text-sm text-muted">
-                  {formatQuantity(Number(item.quantity))} ×{" "}
-                  {formatILS(Number(item.unitPrice))}
+                <p className="mt-0.5 text-sm text-muted">
+                  <span className="numeric">
+                    {formatQuantity(Number(item.quantity))}
+                  </span>{" "}
+                  ×{" "}
+                  <span className="numeric">
+                    {formatILS(Number(item.unitPrice))}
+                  </span>
                 </p>
               </div>
               <span className="numeric shrink-0 font-semibold">

@@ -57,8 +57,10 @@ export default async function ClientsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">{client.full_name}</p>
                   {client.phone ? (
-                    <p className="numeric truncate text-sm text-muted">
-                      {formatPhoneForDisplay(client.phone)}
+                    <p className="truncate text-sm text-muted">
+                      <span className="numeric">
+                        {formatPhoneForDisplay(client.phone)}
+                      </span>
                     </p>
                   ) : (
                     <p className="truncate text-sm text-warning">חסר טלפון</p>

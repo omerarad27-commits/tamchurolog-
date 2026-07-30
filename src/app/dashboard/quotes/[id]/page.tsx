@@ -65,7 +65,10 @@ export default async function QuotePage({
   );
 
   return (
-    <div className="flex flex-col gap-5">
+    /* A single quote is a document, like the client's copy of it. Left to
+       follow the shell, its line descriptions ended up 1300px from their own
+       prices. */
+    <div className="flex w-full max-w-form flex-col gap-5">
       <div>
         <Link
           href="/dashboard"
@@ -75,8 +78,8 @@ export default async function QuotePage({
         </Link>
 
         <div className="mt-2 flex items-center gap-3">
-          <h1 className="numeric text-2xl font-bold">
-            הצעה #{quote.quote_number}
+          <h1>
+            הצעה <span className="numeric">#{quote.quote_number}</span>
           </h1>
           <StatusBadge status={quote.status} />
         </div>
@@ -96,8 +99,8 @@ export default async function QuotePage({
         <h2 className="text-sm font-semibold text-muted">לקוח</h2>
         <p className="mt-1 font-semibold">{client?.full_name ?? "—"}</p>
         {client?.phone ? (
-          <p className="numeric text-sm text-muted">
-            {formatPhoneForDisplay(client.phone)}
+          <p className="text-sm text-muted">
+            <span className="numeric">{formatPhoneForDisplay(client.phone)}</span>
           </p>
         ) : (
           <p className="text-sm text-warning">חסר טלפון</p>
@@ -114,9 +117,14 @@ export default async function QuotePage({
             <li key={item.id} className="flex items-start gap-3 px-5 py-3">
               <div className="min-w-0 flex-1">
                 <p className="font-medium">{item.description}</p>
-                <p className="numeric text-sm text-muted">
-                  {formatQuantity(Number(item.quantity))} ×{" "}
-                  {formatILS(Number(item.unit_price))}
+                <p className="text-sm text-muted">
+                  <span className="numeric">
+                    {formatQuantity(Number(item.quantity))}
+                  </span>{" "}
+                  ×{" "}
+                  <span className="numeric">
+                    {formatILS(Number(item.unit_price))}
+                  </span>
                 </p>
               </div>
               <span className="numeric shrink-0 font-semibold">

@@ -48,6 +48,7 @@ const PASSWORD = "shoot-harness-password-123";
 
 let userId = null;
 let publicToken = null;
+let firstQuoteId = null;
 
 /** Enough rows that a two-column grid and a filter bar both have work to do. */
 const SEED = [
@@ -110,6 +111,7 @@ async function seed() {
       .single();
 
     if (!publicToken) publicToken = quote.public_token;
+    if (!firstQuoteId) firstQuoteId = quote.id;
 
     await admin.from("quote_line_items").insert(
       row.items.map(([description, quantity, unitPrice], index) => ({
@@ -166,6 +168,7 @@ const SCREENS = [
   { name: "clients", path: "/dashboard/clients", auth: true },
   { name: "settings", path: "/dashboard/settings", auth: true },
   { name: "quote-new", path: "/dashboard/quotes/new", auth: true },
+  { name: "quote-detail", path: () => `/dashboard/quotes/${firstQuoteId}`, auth: true },
   { name: "public-quote", path: () => `/q/${publicToken}`, auth: false },
 ];
 

@@ -33,7 +33,9 @@ export default function GlobalError({
       </Button>
 
       {error.digest ? (
-        <p className="numeric text-xs text-muted">קוד תקלה: {error.digest}</p>
+        <p className="text-xs text-muted">
+          קוד תקלה: <span className="numeric">{error.digest}</span>
+        </p>
       ) : null}
     </main>
   );

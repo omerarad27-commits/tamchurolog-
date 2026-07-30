@@ -37,7 +37,11 @@ function Figure({
   return (
     <div className="rounded-card border border-border bg-surface p-5 shadow-sm">
       <h2 className="text-sm font-semibold text-muted">{label}</h2>
-      <p className="numeric mt-1 text-3xl font-bold">{value}</p>
+      {/* .numeric on the paragraph would left-align the figure under a
+          right-aligned label. Only the digits need to run LTR. */}
+      <p className="mt-1 text-3xl font-bold">
+        <span className="numeric">{value}</span>
+      </p>
       {note ? <p className="mt-1 text-sm text-muted">{note}</p> : null}
     </div>
   );
@@ -79,8 +83,8 @@ export default async function StatsPage() {
           screen to see. */}
       <div className="rounded-card border border-success/30 bg-success-soft p-5">
         <h2 className="text-sm font-semibold text-success">סכום שאושר</h2>
-        <p className="numeric mt-1 text-3xl font-bold">
-          {formatILS(stats.approvedValue)}
+        <p className="mt-1 text-3xl font-bold">
+          <span className="numeric">{formatILS(stats.approvedValue)}</span>
         </p>
         <p className="mt-1 text-sm text-muted">
           {stats.approved === 0
@@ -111,8 +115,8 @@ export default async function StatsPage() {
 
       <div className="rounded-card border border-border bg-surface p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-muted">אחוז סגירה</h2>
-        <p className="numeric mt-1 text-3xl font-bold">
-          {formatCloseRate(stats.closeRate)}
+        <p className="mt-1 text-3xl font-bold">
+          <span className="numeric">{formatCloseRate(stats.closeRate)}</span>
         </p>
 
         {/* Two divs, not a chart library: the point is to read the number at a
