@@ -13,7 +13,8 @@
     "seed:demo": "node --env-file=.env.local scripts/seed-demo-quotes.mjs",
     "accounts": "node --env-file=.env.local scripts/list-accounts.mjs",
     "stats": "node --env-file=.env.local scripts/show-stats.mjs",
-    "shoot": "node --env-file=.env.local scripts/shoot.mjs"
+    "shoot": "node --env-file=.env.local scripts/shoot.mjs",
+    "cls": "node --env-file=.env.local scripts/cls.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
