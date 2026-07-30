@@ -75,7 +75,17 @@ export default async function PublicQuotePage({
   const hasVat = vatRate > 0;
 
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-4 px-4 py-6">
+    /*
+      This is the one screen a client sees, and it is a document rather than an
+      application. It grows from a phone's full width to a reading measure and
+      then stops: max-w-document is 640px, and the page background carries the
+      rest of the window. Widening it further would only make the totals travel
+      away from the descriptions they belong to.
+
+      More air above and below on a larger screen, so the document sits on the
+      page instead of being pinned to the top of the window.
+    */
+    <main className="mx-auto flex w-full max-w-document flex-1 flex-col gap-4 px-4 py-6 md:gap-5 md:py-12">
       {/* ------------------------------------------------------- business */}
       <header className="flex items-center gap-3">
         {quote.business.logoUrl ? (
@@ -140,7 +150,7 @@ export default async function PublicQuotePage({
       {/* ---------------------------------------------------------- quote */}
       <section className="overflow-hidden rounded-card border border-border bg-surface shadow-sm">
         <div className="border-b border-border px-5 py-4">
-          <h1 className="text-xl font-bold">הצעת מחיר</h1>
+          <h1 className="text-2xl font-bold md:text-3xl">הצעת מחיר</h1>
           <p className="numeric mt-0.5 text-sm text-muted">
             #{quote.quoteNumber} · {formatDate(quote.issuedAt)}
           </p>
