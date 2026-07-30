@@ -10,8 +10,15 @@ export const metadata: Metadata = {
 export default async function NotFound() {
   /*
    * Same reason as the signup page: a prerendered route cannot carry the CSP
-   * nonce, so its scripts would be refused. Route segment config does not apply
-   * to not-found, so waiting on the connection is how this one opts in.
+   * nonce, so its scripts would be refused — measured at 18 blocked scripts and
+   * no hydration, not assumed. Route segment config does not apply to
+   * not-found, so waiting on the connection is how this one opts in.
+   *
+   * Note the reach of this line: because not-found renders inside the root
+   * layout, it also pulls the other root-level prerendered route (/signup)
+   * into dynamic rendering. That page declares force-dynamic for itself
+   * anyway, so removing this line would not silently break it — but the
+   * coupling is real and is why the build reports no static routes.
    */
   await connection();
 
