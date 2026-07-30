@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 
 import { ButtonLink } from "@/components/ui/button";
 
@@ -6,7 +7,18 @@ export const metadata: Metadata = {
   title: "הדף לא נמצא",
 };
 
-export default function NotFound() {
+export default async function NotFound() {
+  /*
+   * Same reason as the signup page: a prerendered route cannot carry the CSP
+   * nonce, so its scripts would be refused. Route segment config does not apply
+   * to not-found, so waiting on the connection is how this one opts in.
+   */
+  await connection();
+
+  return notFoundBody();
+}
+
+function notFoundBody() {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-4 px-5 py-16 text-center">
       {/*

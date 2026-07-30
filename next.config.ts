@@ -3,21 +3,13 @@ import type { NextConfig } from "next";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 /*
- * Response headers.
+ * Response headers that are the same for every request.
  *
- * All of these are static, which is why they live here rather than in proxy.ts:
- * next.config covers every route, and the proxy matcher deliberately excludes
- * /q/, the one page a client ever sees.
- *
- * On Content-Security-Policy, and why there isn't one yet: the only CSP worth
- * enforcing on a Next application is nonce based, because the framework emits
- * inline scripts for hydration and the RSC payload, and a static policy has to
- * allow 'unsafe-inline' to boot at all, which gives up most of what CSP is for.
- * A nonce has to be minted per request, which means the proxy, which does not
- * run on /q/. Covering /q/ is a deliberate reversal of a documented performance
- * decision, so it is its own piece of work rather than a line in this file. A
- * report-only policy full of 'unsafe-inline' was the other option and it would
- * have looked like protection while enforcing nothing.
+ * Content-Security-Policy is deliberately NOT here any more. It carries a
+ * per-request nonce, so it has to be built where the request is — proxy.ts,
+ * which now matches /q as well precisely so the policy reaches every document.
+ * Setting a second, weaker CSP here would not soften that one either: a browser
+ * given two policies enforces both, and the result is their intersection.
  */
 const securityHeaders = [
   // Stop a browser from second-guessing a declared Content-Type. Cheap, and the
@@ -28,9 +20,18 @@ const securityHeaders = [
    * Nothing here belongs in a frame. This one is not decoration: the public
    * quote page carries an approve button that forms a contract, and framing it
    * under a transparent overlay is the textbook way to harvest a click.
+   *
+   * Kept alongside the CSP's frame-ancestors, which supersedes it in every
+   * current browser, because this header also covers the paths the proxy
+   * matcher skips.
    */
   { key: "X-Frame-Options", value: "DENY" },
-  { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+
+  /*
+   * Severs window.opener for anything this site opens, and isolates the
+   * browsing context group from cross-origin pages that try to reach into it.
+   */
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
 
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
