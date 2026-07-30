@@ -48,6 +48,15 @@
      used one-handed on a phone. */
   --spacing-control: 3rem;
   --spacing-control-sm: 2.75rem;
+
+  /* Width of the whole application shell, header included, as max-w-app.
+     1280px: wide enough that a desktop window stops feeling like a phone held
+     at arm's length, narrow enough that the eye still finds the next line. */
+  --container-app: 80rem;
+
+  /* The client's quote is a document, not an application screen. It stays at a
+     reading width no matter how wide the window gets. */
+  --container-document: 40rem;
 }
 
 body {

@@ -14,7 +14,7 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex w-full max-w-2xl items-center gap-3 px-5 py-3">
+        <div className="mx-auto flex w-full max-w-app items-center gap-3 px-5 py-3">
           {business.logo_url ? (
             <Image
               src={business.logo_url}
@@ -41,9 +41,21 @@ export default async function DashboardLayout({
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-6">{children}</main>
+      {/*
+        One column on a phone, two from md up.
 
-      <DashboardNav />
+        Because the document is RTL, a flex row lays its children out right to
+        left, so the sidebar needs no side-specific class at all: md:order-first
+        puts it first in the visual order, which is the right edge. The same
+        markup is a bottom bar on a phone and a right rail on a desktop.
+      */}
+      <div className="mx-auto flex w-full max-w-app flex-1 flex-col md:flex-row md:items-start md:gap-8 md:px-5">
+        <main className="w-full min-w-0 flex-1 px-5 py-6 md:px-0 md:py-8">
+          {children}
+        </main>
+
+        <DashboardNav />
+      </div>
     </div>
   );
 }
