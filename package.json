@@ -20,7 +20,8 @@
     "verify:csp": "node --env-file=.env.local scripts/verify-csp.mjs",
     "verify:redirect": "node --env-file=.env.local scripts/verify-redirect.mjs",
     "verify:quote": "node --env-file=.env.local scripts/verify-quote-page.mjs",
-    "verify:seo": "node scripts/verify-seo.mjs"
+    "verify:seo": "node scripts/verify-seo.mjs",
+    "verify:a11y": "node --env-file=.env.local scripts/verify-a11y.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",

@@ -49,7 +49,18 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#1d4ed8",
+  /*
+   * One value painted the phone's address bar brand blue in both schemes, which
+   * on a dark home screen reads as a bright band the OS did not ask for. The
+   * dark entry matches the surface a dark-mode browser draws around the page.
+   *
+   * The site itself is still light-only by design; this is about the browser
+   * chrome above it, not the page.
+   */
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#1d4ed8" },
+    { media: "(prefers-color-scheme: dark)", color: "#101828" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

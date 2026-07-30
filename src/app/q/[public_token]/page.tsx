@@ -319,9 +319,25 @@ export default async function PublicQuotePage({
         </a>
       ) : null}
 
-      <p className="pt-2 text-center text-xs text-muted">
-        נשלח באמצעות תמחורולוג
-      </p>
+      {/*
+        A footer landmark rather than a loose paragraph: it was the one piece of
+        this page with no semantic home, which left a screen reader no way to
+        jump to it or past it.
+
+        The name is also the only mention of the product a client ever sees, so
+        it links home. rel="noopener" is redundant against our own COOP header
+        and is there for the browser that ignores it.
+      */}
+      <footer className="pt-2 text-center text-xs text-muted">
+        נשלח באמצעות{" "}
+        <a
+          href="/"
+          rel="noopener"
+          className="font-semibold text-brand hover:underline"
+        >
+          תמחורולוג
+        </a>
+      </footer>
     </main>
   );
 }
