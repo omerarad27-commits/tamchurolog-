@@ -18,6 +18,20 @@ const PROTECTED_PREFIXES = ["/dashboard"];
 const SUPABASE_ORIGIN = new URL(publicEnv.supabaseUrl).origin;
 
 /**
+ * Generated files and images that never belong to a signed-in user. Asking
+ * Supabase to revalidate a session before serving a sitemap to a crawler is a
+ * network round trip spent on nobody.
+ */
+const SESSIONLESS_PATHS = new Set([
+  "/robots.txt",
+  "/sitemap.xml",
+  "/manifest.webmanifest",
+  "/opengraph-image",
+  "/icon",
+  "/apple-icon",
+]);
+
+/**
  * Builds the Content-Security-Policy for one request.
  *
  * The nonce is the point of the whole exercise. Next emits inline scripts for
@@ -111,7 +125,7 @@ export async function proxy(request: NextRequest) {
    * approve/decline actions are public by design and validate the token
    * themselves.
    */
-  if (pathname.startsWith("/q/")) {
+  if (pathname.startsWith("/q/") || SESSIONLESS_PATHS.has(pathname)) {
     const response = NextResponse.next({
       request: { headers: headersWithNonce(request, nonce, csp) },
     });

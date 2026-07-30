@@ -1,6 +1,18 @@
+import type { Metadata } from "next";
+
 import { ButtonLink } from "@/components/ui/button";
 import { getUser } from "@/lib/auth";
 import { checkSupabaseHealth } from "@/lib/supabase/health";
+
+/*
+ * The only page here meant to be indexed, so it is the only one that needs to
+ * say where it really lives. Every Vercel deployment answers on its own
+ * hostname as well as the production one, and without this a crawler that finds
+ * a preview URL treats it as a separate, duplicate site.
+ */
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 /*
  * The connection card is a setup aid, not a feature.
