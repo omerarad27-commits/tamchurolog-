@@ -24,7 +24,7 @@ export default async function ClientsPage() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">לקוחות</h1>
+        <h1>לקוחות</h1>
         <ButtonLink href="/dashboard/clients/new" size="sm">
           לקוח חדש
         </ButtonLink>
@@ -45,7 +45,9 @@ export default async function ClientsPage() {
           </ButtonLink>
         </div>
       ) : (
-        <ul className="flex flex-col gap-2">
+        /* Same shape as the quote list, for the same reason: a name at one edge
+           and a chevron at the other with 900px between them is not a row. */
+        <ul className="grid gap-2 lg:grid-cols-2">
           {clients.map((client) => (
             <li key={client.id}>
               <Link
