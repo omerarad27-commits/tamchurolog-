@@ -46,10 +46,21 @@ export default async function FormsPage() {
                   className="flex flex-col gap-0.5 rounded-card border border-border bg-surface p-4 transition-colors hover:bg-background"
                 >
                   <span className="truncate font-semibold">{form.name}</span>
-                  {/* .numeric on the line would turn the whole row LTR and drag
+                  {/* One question is spelled out rather than counted: Hebrew
+                      does not take a numeral before a singular noun, and
+                      "1 שאלות" is the kind of wrong that makes an app look
+                      machine-made.
+
+                      .numeric on the line would turn the whole row LTR and drag
                       it away from the right edge. Only the digits are isolated. */}
                   <span className="text-sm text-muted">
-                    <span className="numeric">{count}</span> שאלות
+                    {count === 1 ? (
+                      "שאלה אחת"
+                    ) : (
+                      <>
+                        <span className="numeric">{count}</span> שאלות
+                      </>
+                    )}
                   </span>
                 </Link>
               </li>
