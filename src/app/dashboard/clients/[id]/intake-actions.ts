@@ -9,11 +9,14 @@ export type IntakeSendState = {
   error: string | null;
   /** The token of the request just created, used to build the WhatsApp link. */
   token: string | null;
+  /** The id of the form the token belongs to, so a stale link can be told apart from a fresh one. */
+  formId: string | null;
 };
 
 export const EMPTY_INTAKE_SEND_STATE: IntakeSendState = {
   error: null,
   token: null,
+  formId: null,
 };
 
 /**
@@ -33,7 +36,7 @@ export async function createIntakeRequestAction(
   const clientId = String(formData.get("clientId") ?? "");
   const formId = String(formData.get("formId") ?? "");
   if (!clientId || !formId) {
-    return { error: "יש לבחור שאלון.", token: null };
+    return { error: "יש לבחור שאלון.", token: null, formId: null };
   }
 
   const { data: form } = await supabase
@@ -43,12 +46,16 @@ export async function createIntakeRequestAction(
     .eq("business_id", business.id)
     .maybeSingle();
 
-  if (!form) return { error: "השאלון לא נמצא.", token: null };
+  if (!form) return { error: "השאלון לא נמצא.", token: null, formId: null };
 
   const questions = parseQuestions(form.questions);
   const problem = validateQuestions(questions);
   if (problem) {
-    return { error: "השאלון אינו תקין. פתח אותו ותקן לפני השליחה.", token: null };
+    return {
+      error: "השאלון אינו תקין. פתח אותו ותקן לפני השליחה.",
+      token: null,
+      formId: null,
+    };
   }
 
   // The client is re-read under RLS rather than trusted from the URL: this
@@ -60,7 +67,7 @@ export async function createIntakeRequestAction(
     .eq("business_id", business.id)
     .maybeSingle();
 
-  if (!client) return { error: "הלקוח לא נמצא.", token: null };
+  if (!client) return { error: "הלקוח לא נמצא.", token: null, formId: null };
 
   const { data: created, error } = await supabase
     .from("intake_requests")
@@ -75,9 +82,9 @@ export async function createIntakeRequestAction(
     .single();
 
   if (error || !created) {
-    return { error: "יצירת הקישור נכשלה. נסה שוב.", token: null };
+    return { error: "יצירת הקישור נכשלה. נסה שוב.", token: null, formId: null };
   }
 
   revalidatePath(`/dashboard/clients/${clientId}`);
-  return { error: null, token: created.public_token };
+  return { error: null, token: created.public_token, formId: form.id };
 }

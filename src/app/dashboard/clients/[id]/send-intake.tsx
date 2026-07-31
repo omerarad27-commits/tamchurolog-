@@ -48,7 +48,11 @@ export function SendIntake({
    * A GET link that creates the row and redirects is worse: next/link
    * prefetches, so merely hovering the list would create rows.
    */
-  const link = state.token
+  // Without the formId check, changing the dropdown after preparing a link
+  // leaves the old token's link on screen under the new form's name, and the
+  // owner sends the client the wrong questionnaire. Once the selection moves
+  // on, the link simply disappears until a fresh one is prepared for it.
+  const link = state.token && state.formId === formId
     ? buildWhatsAppUrl(
         clientPhone,
         buildIntakeMessage({
