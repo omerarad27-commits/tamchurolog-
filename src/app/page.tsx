@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
+import { SignupForm } from "@/app/(auth)/signup/signup-form";
 import { ButtonLink } from "@/components/ui/button";
 import { getUser } from "@/lib/auth";
 import { checkSupabaseHealth } from "@/lib/supabase/health";
@@ -13,6 +15,27 @@ import { checkSupabaseHealth } from "@/lib/supabase/health";
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
+
+/**
+ * What the product does, in the order a tradesperson cares about it.
+ *
+ * Outcomes rather than features: nobody wants a "quote management system",
+ * they want to know whether the client opened it.
+ */
+const VALUE_POINTS = [
+  {
+    title: "שולחים בוואטסאפ",
+    body: "כל הצעה מקבלת קישור אישי. הלקוח פותח אותו בטלפון, בלי אפליקציה ובלי הרשמה.",
+  },
+  {
+    title: "רואים מתי היא נפתחה",
+    body: "יודעים מי קרא ומי מתלבט, ולמי כדאי לשלוח תזכורת לפני שההצעה מתקררת.",
+  },
+  {
+    title: "הלקוח מאשר בלחיצה",
+    body: "אישור בשמו המלא נשמר על ההצעה, ואתם מקבלים תשובה ברורה במקום שתיקה.",
+  },
+];
 
 /*
  * The connection card is a setup aid, not a feature.
@@ -36,44 +59,91 @@ export default async function HomePage() {
   ]);
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-5 px-5 py-12">
-      <header className="flex items-center gap-3">
-        <span
-          aria-hidden="true"
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-tile bg-brand text-2xl font-bold text-brand-foreground"
-        >
-          ת
-        </span>
+    /*
+      Two columns from lg up: the pitch on one side, the thing to do about it
+      on the other, both visible without scrolling. Below that they stack, and
+      the form comes second — on a phone the reason to sign up has to arrive
+      before the form asking you to.
+    */
+    <main className="mx-auto flex w-full max-w-app flex-1 flex-col justify-center gap-8 px-5 py-10 lg:flex-row lg:items-center lg:gap-16 lg:py-16">
+      <div className="flex w-full flex-col gap-6 lg:max-w-lg">
+        <header className="flex items-center gap-3">
+          <span
+            aria-hidden="true"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-tile bg-brand text-2xl font-bold text-brand-foreground"
+          >
+            ת
+          </span>
+          <p className="text-lg font-bold">תמחורולוג</p>
+        </header>
+
         <div>
-          <h1 className="text-2xl font-bold leading-tight">תמחורולוג</h1>
-          <p className="text-sm text-muted">הצעות מחיר שנסגרות, לא נעלמות</p>
+          <h1 className="text-balance">הצעות מחיר שנסגרות, לא נעלמות</h1>
+          <p className="mt-3 text-lg leading-relaxed text-muted">
+            שולחים הצעת מחיר בוואטסאפ, ורואים בדיוק מה קרה איתה. לבעלי מקצוע
+            שרוצים לדעת מי קרא, מי מתלבט ומי כבר אישר.
+          </p>
         </div>
-      </header>
 
-      <section className="rounded-card border border-border bg-surface p-5 shadow-sm">
-        <h2 className="text-lg font-semibold">
-          שולחים הצעת מחיר, ויודעים מה קרה איתה
-        </h2>
-        <p className="mt-1 text-sm leading-relaxed text-muted">
-          כל הצעה מקבלת קישור אישי. רואים מתי הלקוח פתח אותה, מי שוקל, ומי צריך
-          תזכורת — הכל מהטלפון.
-        </p>
+        <ul className="flex flex-col gap-4">
+          {VALUE_POINTS.map((point) => (
+            <li key={point.title} className="flex gap-3">
+              <span
+                aria-hidden="true"
+                className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-bold text-brand"
+              >
+                ✓
+              </span>
+              <div>
+                <p className="font-semibold">{point.title}</p>
+                <p className="mt-0.5 text-sm leading-relaxed text-muted">
+                  {point.body}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
 
+      {/* ------------------------------------------------------- sign up */}
+      <div className="w-full lg:max-w-form lg:flex-1">
         {user ? (
-          <ButtonLink href="/dashboard" className="mt-4">
-            לאזור האישי
-          </ButtonLink>
-        ) : (
-          <div className="mt-4 flex flex-col gap-2">
-            <ButtonLink href="/signup">פתיחת חשבון</ButtonLink>
-            <ButtonLink href="/login" variant="secondary">
-              התחברות
+          <section className="rounded-card border border-border bg-surface p-5 shadow-sm">
+            <h2 className="text-lg font-semibold">כבר מחוברים</h2>
+            <p className="mt-1 text-sm leading-relaxed text-muted">
+              אפשר להמשיך ישר לאזור האישי.
+            </p>
+            <ButtonLink href="/dashboard" className="mt-4">
+              לאזור האישי
             </ButtonLink>
-          </div>
-        )}
-      </section>
+          </section>
+        ) : (
+          <section className="rounded-card border border-border bg-surface p-5 shadow-sm">
+            <h2 className="text-lg font-semibold">פתיחת חשבון</h2>
+            <p className="mt-1 mb-4 text-sm text-muted">
+              דקה אחת, ואפשר לשלוח את הצעת המחיר הראשונה.
+            </p>
 
-      {health ? <SupabaseHealthCard health={health} /> : null}
+            <SignupForm />
+
+            <p className="mt-5 text-center text-sm text-muted">
+              כבר יש לך חשבון?{" "}
+              <Link
+                href="/login"
+                className="font-semibold text-brand hover:underline"
+              >
+                התחברות
+              </Link>
+            </p>
+          </section>
+        )}
+
+        {health ? (
+          <div className="mt-4">
+            <SupabaseHealthCard health={health} />
+          </div>
+        ) : null}
+      </div>
     </main>
   );
 }

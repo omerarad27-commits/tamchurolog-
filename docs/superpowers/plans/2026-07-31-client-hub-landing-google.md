@@ -329,6 +329,23 @@ git commit -m "Give the home page a landing and the signup form itself"
 
 ---
 
+## Tasks 5-7: DEFERRED
+
+Google sign-in was postponed on 2026-07-31 at the owner's request, after tasks
+1-4 shipped. Nothing was half-built: no `/auth` routes exist, no `/welcome`
+page exists, and the landing page carries no Google button, so there is no dead
+control anywhere in the interface.
+
+The design for it stands unchanged in the spec, including the two findings that
+are easy to lose: the button must be a link because `form-action 'self'` makes
+Chrome refuse a redirect that follows a form submission, and a Google signup
+produces a business with no name because the database trigger reads a field
+Google never sends.
+
+The three tasks below are ready to pick up as written.
+
+---
+
 ## Task 5: Google sign-in routes and button
 
 **Files:**
