@@ -59,6 +59,14 @@ export function FormBuilder({ draft }: { draft?: FormDraft }) {
       .map((question) => ({ id: question.id, prompt: question.prompt })),
   );
 
+  /*
+   * Controlled (not defaultValue) so a validation error that re-renders the
+   * form via useActionState without a redirect does not wipe out what the
+   * owner already typed — React resets uncontrolled fields on every
+   * non-redirecting form-action submission.
+   */
+  const [name, setName] = useState(draft?.name ?? "");
+
   const fieldPrefix = useId();
 
   /*
@@ -99,7 +107,8 @@ export function FormBuilder({ draft }: { draft?: FormDraft }) {
         <TextField
           label="שם השאלון"
           name="name"
-          defaultValue={draft?.name ?? ""}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
           maxLength={MAX_FORM_NAME_LENGTH}
           placeholder="לדוגמה: שאלון שיפוץ מקלחת"
           hint="השם הזה נראה רק לך, כדי למצוא את השאלון ברשימה."

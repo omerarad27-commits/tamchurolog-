@@ -1,37 +1,29 @@
 "use client";
 
-import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 import { deleteFormAction } from "./actions";
 
+/**
+ * Deletion is irreversible and the button sits right under the save button on a
+ * small screen, so it asks first. Once confirmed it goes through SubmitButton,
+ * which disables itself so an impatient second tap cannot fire another delete.
+ */
 export function DeleteFormButton({ id, name }: { id: string; name: string }) {
-  const [confirming, setConfirming] = useState(false);
-
-  if (!confirming) {
-    return (
-      <Button type="button" variant="danger" onClick={() => setConfirming(true)}>
-        מחיקת השאלון
-      </Button>
-    );
-  }
-
   return (
-    <form action={deleteFormAction} className="flex flex-col gap-2">
+    <form
+      action={deleteFormAction}
+      onSubmit={(event) => {
+        const confirmed = window.confirm(
+          `למחוק את "${name}"? שאלונים שכבר נשלחו והתשובות עליהם יישמרו.`,
+        );
+        if (!confirmed) event.preventDefault();
+      }}
+    >
       <input type="hidden" name="formId" value={id} />
-      <p className="text-sm text-muted">
-        למחוק את &quot;{name}&quot;? שאלונים שכבר נשלחו והתשובות עליהם יישמרו.
-      </p>
-      <div className="flex gap-2">
-        <SubmitButton variant="danger" pendingLabel="מוחק…">
-          כן, למחוק
-        </SubmitButton>
-        <Button type="button" variant="secondary" onClick={() => setConfirming(false)}>
-          ביטול
-        </Button>
-      </div>
+      <SubmitButton variant="danger" pendingLabel="מוחק…">
+        מחיקת השאלון
+      </SubmitButton>
     </form>
   );
 }

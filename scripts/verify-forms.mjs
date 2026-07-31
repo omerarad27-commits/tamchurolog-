@@ -84,13 +84,18 @@ async function run() {
     page.url().includes("/forms/new") &&
       (await page.locator('p[role="alert"]').innerText()).includes("שאלה אחת"),
   );
+  // The name field is controlled (useState), not defaultValue, precisely so
+  // that this rejection - a non-redirecting form-action submission - does not
+  // wipe out what the owner already typed. Assert on the input's own value,
+  // not on page text, since that's the thing that used to silently reset.
+  check(
+    "the typed name survives the rejection",
+    (await page.locator('input[name="name"]').inputValue()) === FORM_NAME,
+  );
 
   /* ------------------------------------------------------- build one */
-  // React resets uncontrolled form fields after every action submission that
-  // does not redirect - including this one, which only failed on the
-  // questions. The name field is uncontrolled (TextField uses defaultValue),
-  // so it must be re-filled here even though nothing about it was invalid.
-  await page.fill('input[name="name"]', FORM_NAME);
+  // The name field is controlled, so it's still FORM_NAME from here on - no
+  // need to re-fill it after the rejection above.
   await page.locator('input[type="checkbox"]').first().check();
   await page.getByRole("button", { name: "+ הוספת שאלה" }).click();
   await page.getByLabel("שאלה 1", { exact: true }).fill("מה גודל החדר?");
