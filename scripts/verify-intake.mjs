@@ -210,8 +210,18 @@ async function run() {
   /* ------------------------------------------------------ an unknown token */
   const missing = await fetch(`${BASE}/f/${"a".repeat(32)}`, { redirect: "manual" });
   check("an unknown token is a 404", missing.status === 404, String(missing.status));
+  const missingBody = await missing.text();
+  check(
+    "an unknown token's 404 is still noindex",
+    /noindex/.test(missingBody),
+  );
   const malformed = await fetch(`${BASE}/f/not-a-token`, { redirect: "manual" });
   check("a malformed token is a 404", malformed.status === 404, String(malformed.status));
+  const malformedBody = await malformed.text();
+  check(
+    "a malformed token's 404 is still noindex",
+    /noindex/.test(malformedBody),
+  );
 
   await browser.close();
 }

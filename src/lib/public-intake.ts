@@ -79,5 +79,12 @@ export async function submitIntake(
   });
 
   if (error) return "error";
-  return data === "ok" ? "ok" : "unchanged";
+  if (data === "ok") return "ok";
+  if (data === "unchanged") return "unchanged";
+
+  // The function is only known to return "ok" or "unchanged". An unrecognised
+  // value must not be read as success just because it isn't "ok" - collapsing
+  // it into "unchanged" would show the client a thank-you screen for a write
+  // that may never have happened.
+  return "error";
 }
