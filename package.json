@@ -27,7 +27,8 @@
     "verify:intake-unit": "node --experimental-strip-types --import ./scripts/register-ts-alias.mjs scripts/verify-intake-unit.mjs",
     "verify:client-hub": "node --env-file=.env.local scripts/verify-client-hub.mjs",
     "verify:forms": "node --env-file=.env.local scripts/verify-forms.mjs",
-    "verify:landing": "node --env-file=.env.local scripts/verify-landing.mjs"
+    "verify:landing": "node --env-file=.env.local scripts/verify-landing.mjs",
+    "verify:intake": "node --env-file=.env.local scripts/verify-intake.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",

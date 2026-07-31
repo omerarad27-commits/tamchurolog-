@@ -124,8 +124,16 @@ export async function proxy(request: NextRequest) {
    * control — the page is fetched server side by exact token, and the
    * approve/decline actions are public by design and validate the token
    * themselves.
+   *
+   * /f, the intake questionnaire, is here for exactly the same reasons: the
+   * client has no account, the page is fetched server side by exact token, and
+   * the submit action validates the token itself.
    */
-  if (pathname.startsWith("/q/") || SESSIONLESS_PATHS.has(pathname)) {
+  if (
+    pathname.startsWith("/q/") ||
+    pathname.startsWith("/f/") ||
+    SESSIONLESS_PATHS.has(pathname)
+  ) {
     const response = NextResponse.next({
       request: { headers: headersWithNonce(request, nonce, csp) },
     });
