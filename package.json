@@ -24,6 +24,7 @@
     "verify:a11y": "node --env-file=.env.local scripts/verify-a11y.mjs",
     "verify:bidi": "node --experimental-strip-types scripts/verify-bidi.mjs",
     "verify:contact": "node --experimental-strip-types --import ./scripts/register-ts-alias.mjs scripts/verify-contact-links.mjs",
+    "verify:intake-unit": "node --experimental-strip-types --import ./scripts/register-ts-alias.mjs scripts/verify-intake-unit.mjs",
     "verify:client-hub": "node --env-file=.env.local scripts/verify-client-hub.mjs",
     "verify:landing": "node --env-file=.env.local scripts/verify-landing.mjs"
   },
