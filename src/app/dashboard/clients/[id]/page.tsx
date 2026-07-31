@@ -7,11 +7,13 @@ import { ButtonLink, buttonClasses } from "@/components/ui/button";
 import { requireBusiness } from "@/lib/auth";
 import { formatDate, formatILS } from "@/lib/format";
 import { formatPhoneForDisplay, normalizeIsraeliPhone } from "@/lib/phone";
+import { SITE_URL } from "@/lib/site";
 import type { Client, QuoteStatus } from "@/lib/types";
 import { buildWhatsAppChatUrl } from "@/lib/whatsapp";
 
 import { ClientForm } from "../client-form";
 import { DeleteClientButton } from "../delete-client-button";
+import { SendIntake } from "./send-intake";
 
 export const metadata: Metadata = {
   title: "לקוח | תמחורולוג",
@@ -55,6 +57,12 @@ export default async function ClientPage({
     .order("issued_at", { ascending: false });
 
   const quotes = (quoteRows ?? []) as ClientQuote[];
+
+  const { data: formRows } = await supabase
+    .from("intake_forms")
+    .select("id, name")
+    .eq("business_id", business.id)
+    .order("created_at", { ascending: false });
 
   // One parse, used by both links. A number that will not normalise gets no
   // buttons at all rather than buttons that reach the wrong person.
@@ -172,6 +180,24 @@ export default async function ClientPage({
         keyboard accessible and announced by a screen reader for free, and this
         page is otherwise a server component.
       */}
+      {/* Collapsed by default for the same reason the edit form is: most visits to
+          this page are to read a quote, not to send a questionnaire. */}
+      <details className="rounded-card border border-border bg-surface">
+        <summary className="cursor-pointer px-5 py-4 font-semibold">
+          שליחת שאלון
+        </summary>
+        <div className="border-t border-border p-5">
+          <SendIntake
+            clientId={client.id}
+            clientName={client.full_name}
+            clientPhone={client.phone}
+            businessName={business.name}
+            siteUrl={SITE_URL}
+            forms={formRows ?? []}
+          />
+        </div>
+      </details>
+
       <details className="rounded-card border border-border bg-surface">
         <summary className="cursor-pointer px-5 py-4 font-semibold">
           עריכת פרטי הלקוח
