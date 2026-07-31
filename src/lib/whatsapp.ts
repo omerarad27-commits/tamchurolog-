@@ -19,6 +19,25 @@ export type WhatsAppTarget = {
   hasRecipient: boolean;
 };
 
+/**
+ * Opens a plain conversation with the client, with nothing written for them.
+ *
+ * Separate from buildWhatsAppUrl because the intent is different: that one
+ * delivers a quote and always carries a message, this one is the tradesperson
+ * wanting a word. Both normalise through the same function, so there is one
+ * definition of a valid Israeli number rather than two that drift.
+ */
+export function buildWhatsAppChatUrl(phone: string | null): WhatsAppTarget {
+  const normalized = phone ? normalizeIsraeliPhone(phone) : null;
+
+  // Never guess a recipient. Without a usable number this opens WhatsApp on
+  // its contact picker, which is honest; a half-parsed number would open a
+  // chat with somebody else entirely.
+  if (!normalized) return { url: "https://wa.me/", hasRecipient: false };
+
+  return { url: `https://wa.me/${normalized.wa}`, hasRecipient: true };
+}
+
 export function buildWhatsAppUrl(
   phone: string | null,
   message: string,
