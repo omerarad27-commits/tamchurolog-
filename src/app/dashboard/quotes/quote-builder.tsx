@@ -68,6 +68,7 @@ export function QuoteBuilder({
   businessType,
   defaultWithVat,
   draft,
+  initialClientId,
 }: {
   clients: Client[];
   defaultValidUntil: string;
@@ -76,6 +77,15 @@ export function QuoteBuilder({
   defaultWithVat: boolean;
   /** Present when editing an existing quote. */
   draft?: QuoteDraft;
+  /**
+   * Preselects a client when arriving from that client's page.
+   *
+   * Deliberately its own prop rather than a one-field `draft`: `draft` means
+   * "this is an edit", and the line below switches the form to
+   * updateQuoteAction on its presence. Carrying a client id in it would turn a
+   * new quote into an update of a quote that does not exist.
+   */
+  initialClientId?: string;
 }) {
   const isEdit = Boolean(draft);
 
@@ -85,7 +95,9 @@ export function QuoteBuilder({
   );
 
   const [clientId, setClientId] = useState(
-    draft?.clientId ?? (clients.length === 1 ? clients[0].id : ""),
+    draft?.clientId ??
+      initialClientId ??
+      (clients.length === 1 ? clients[0].id : ""),
   );
   const [lines, setLines] = useState<DraftLine[]>(() => linesFromDraft(draft));
   const [withVat, setWithVat] = useState(draft?.withVat ?? defaultWithVat);
