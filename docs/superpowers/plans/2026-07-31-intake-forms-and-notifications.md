@@ -1327,15 +1327,6 @@ async function run() {
     await page.locator('input[type="checkbox"]').first().isChecked(),
   );
 
-  /* --------------------------------------------------------- tenancy */
-  const { data: other } = await admin
-    .from("intake_forms")
-    .insert({ business_id: biz.id, name: "x", questions: [] })
-    .select("id")
-    .single();
-  await admin.from("intake_forms").delete().eq("id", other.id);
-  check("the service key can clean up after itself", true);
-
   await browser.close();
 }
 
