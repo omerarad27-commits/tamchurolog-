@@ -85,8 +85,14 @@ Both tables: the owner may select, insert, update and delete only rows whose
 `business_id` belongs to them, proven by joining back to `businesses` — the
 pattern every existing table already uses. Anonymous visitors get nothing.
 
-The public form page reads through a `security definer` function keyed on the
-exact token, exactly as `/q` does, so PostgREST stays closed to the anon role.
+The public form page is read on the server with the service-role key on an
+exact token match, exactly as `/q` is — see `src/lib/public-quote.ts`. There is
+no anon policy on either table, so PostgREST stays completely closed: there is
+no endpoint an anonymous visitor can call to list or filter these rows.
+
+Writes go through a `security definer` function, as `record_quote_decision`
+does, so "refuse a second submission" is enforced in SQL rather than in a
+read-then-write race in TypeScript.
 
 ---
 
@@ -177,8 +183,9 @@ A public page mirroring `/q/[public_token]` in every protective detail:
 | `Disallow: /f/` in `robots.ts` | a crawler should not reach it at all |
 | proxy early return | nonce only, no Supabase round trip on the client's critical path |
 
-Read through `get_intake_request_by_token(p_token)`, a `security definer`
-function, so the anon role never touches the table.
+Read by `loadPublicIntake(token)` in `src/lib/public-intake.ts`, the mirror of
+`loadPublicQuote`: shape-check the token, then one exact-match lookup with the
+service-role key, returning only the fields the page renders.
 
 The page: business name, a short line saying why they were sent this, the
 questions as radio groups and textareas, and one submit button. Mobile first,
@@ -209,16 +216,24 @@ notifications
   id                 uuid pk
   business_id        uuid -> businesses(id) on delete cascade
   kind               text check (kind in ('intake_submitted','quote_approved'))
-  title              text not null      -- snapshot
-  body               text
+  subject_name       text               -- snapshot of the client's name
+  quote_number       integer null       -- snapshot
   intake_request_id  uuid null
   quote_id           uuid null
   read_at            timestamptz null
   created_at         timestamptz
 ```
 
-`title` and `body` are written at creation and never recomputed, so a client
-deleted next month does not blank last month's notifications.
+`subject_name` and `quote_number` are copied in at creation and never
+recomputed, so a client deleted next month does not blank last month's
+notifications.
+
+The Hebrew sentence is **not** stored. It is composed at render time from
+`kind`, `subject_name` and `quote_number`, because these rows are written by
+SQL functions and every migration in this project is pure ASCII — a Hebrew
+literal cannot appear in one. Snapshotting the two values rather than the
+sentence gets the same immunity to later deletions and keeps the wording in the
+codebase, where it can be changed without a migration.
 
 In-app only. There is no email infrastructure in this project, and adding a
 provider would mean a dependency, an API key, a domain to verify and a running
