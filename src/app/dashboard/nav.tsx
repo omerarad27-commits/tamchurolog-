@@ -12,7 +12,7 @@ import { usePathname } from "next/navigation";
  *
  * From md up that reasoning stops applying. There is no thumb, the pointer is
  * already travelling, and a bar pinned across the foot of a 1440px window is
- * four links stranded in a lot of nothing. It becomes a rail on the right edge
+ * five links stranded in a lot of nothing. It becomes a rail on the right edge
  * instead, sticky so it survives a long list.
  *
  * Only classes change between the two. The tab list, the active-route test and
@@ -21,6 +21,7 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { href: "/dashboard", label: "הצעות" },
   { href: "/dashboard/clients", label: "לקוחות" },
+  { href: "/dashboard/forms", label: "שאלונים" },
   { href: "/dashboard/stats", label: "סיכום" },
   { href: "/dashboard/settings", label: "הגדרות" },
 ] as const;

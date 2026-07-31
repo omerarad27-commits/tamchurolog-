@@ -26,6 +26,7 @@
     "verify:contact": "node --experimental-strip-types --import ./scripts/register-ts-alias.mjs scripts/verify-contact-links.mjs",
     "verify:intake-unit": "node --experimental-strip-types --import ./scripts/register-ts-alias.mjs scripts/verify-intake-unit.mjs",
     "verify:client-hub": "node --env-file=.env.local scripts/verify-client-hub.mjs",
+    "verify:forms": "node --env-file=.env.local scripts/verify-forms.mjs",
     "verify:landing": "node --env-file=.env.local scripts/verify-landing.mjs"
   },
   "dependencies": {
