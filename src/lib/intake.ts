@@ -9,6 +9,35 @@
  * database.
  */
 
+/**
+ * State for the dashboard "send questionnaire" flow and the public submit
+ * flow, both driven by `useActionState` against a "use server" action.
+ *
+ * Kept here rather than beside the actions that use them: a "use server" file
+ * may only export async functions, so these types and constants would break
+ * the module at runtime (build/lint/typecheck do not catch this).
+ */
+export type IntakeSendState = {
+  error: string | null;
+  /** The token of the request just created, used to build the WhatsApp link. */
+  token: string | null;
+  /** The id of the form the token belongs to, so a stale link can be told apart from a fresh one. */
+  formId: string | null;
+};
+
+export const EMPTY_INTAKE_SEND_STATE: IntakeSendState = {
+  error: null,
+  token: null,
+  formId: null,
+};
+
+export type IntakeState = {
+  error: string | null;
+  done: boolean;
+};
+
+export const EMPTY_INTAKE_STATE: IntakeState = { error: null, done: false };
+
 export const MAX_FORM_NAME_LENGTH = 60;
 export const MAX_QUESTIONS = 20;
 export const MAX_PROMPT_LENGTH = 200;

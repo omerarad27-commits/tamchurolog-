@@ -3,21 +3,11 @@
 import { revalidatePath } from "next/cache";
 
 import { requireBusiness } from "@/lib/auth";
-import { parseQuestions, validateQuestions } from "@/lib/intake";
-
-export type IntakeSendState = {
-  error: string | null;
-  /** The token of the request just created, used to build the WhatsApp link. */
-  token: string | null;
-  /** The id of the form the token belongs to, so a stale link can be told apart from a fresh one. */
-  formId: string | null;
-};
-
-export const EMPTY_INTAKE_SEND_STATE: IntakeSendState = {
-  error: null,
-  token: null,
-  formId: null,
-};
+import {
+  type IntakeSendState,
+  parseQuestions,
+  validateQuestions,
+} from "@/lib/intake";
 
 /**
  * Creates one sent copy of a saved questionnaire.

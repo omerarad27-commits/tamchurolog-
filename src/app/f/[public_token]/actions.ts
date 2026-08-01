@@ -2,7 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 
-import { parseAnswers, validateAnswers } from "@/lib/intake";
+import {
+  type IntakeState,
+  parseAnswers,
+  validateAnswers,
+} from "@/lib/intake";
 import { loadPublicIntake, submitIntake } from "@/lib/public-intake";
 
 /*
@@ -20,13 +24,6 @@ import { loadPublicIntake, submitIntake } from "@/lib/public-intake";
  */
 
 const TOKEN_PATTERN = /^[0-9a-f]{32}$/;
-
-export type IntakeState = {
-  error: string | null;
-  done: boolean;
-};
-
-export const EMPTY_INTAKE_STATE: IntakeState = { error: null, done: false };
 
 export async function submitIntakeAction(
   _previousState: IntakeState,

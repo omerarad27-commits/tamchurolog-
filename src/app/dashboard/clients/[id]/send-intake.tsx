@@ -6,12 +6,10 @@ import { Alert } from "@/components/ui/alert";
 import { buttonClasses } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { inputClasses } from "@/components/ui/text-field";
+import { EMPTY_INTAKE_SEND_STATE } from "@/lib/intake";
 import { buildIntakeMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 
-import {
-  createIntakeRequestAction,
-  EMPTY_INTAKE_SEND_STATE,
-} from "./intake-actions";
+import { createIntakeRequestAction } from "./intake-actions";
 
 export function SendIntake({
   clientId,

@@ -4,9 +4,13 @@ import { useActionState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { MAX_ANSWER_LENGTH, type IntakeQuestion } from "@/lib/intake";
+import {
+  EMPTY_INTAKE_STATE,
+  MAX_ANSWER_LENGTH,
+  type IntakeQuestion,
+} from "@/lib/intake";
 
-import { EMPTY_INTAKE_STATE, submitIntakeAction } from "./actions";
+import { submitIntakeAction } from "./actions";
 
 export function IntakeForm({
   token,
