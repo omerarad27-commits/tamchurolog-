@@ -37,6 +37,7 @@ function check(name, passed, detail = "") {
 const email = `hubcheck-${Date.now()}@example.com`;
 const PASSWORD = "hub-check-password-123";
 let userId = null;
+let businessId = null;
 const ids = { withPhone: null, noPhone: null, other: null };
 const numbers = { a: [], b: [] };
 
@@ -65,6 +66,7 @@ async function seed() {
 
   const { data: biz } = await admin
     .from("businesses").select("id").eq("owner_user_id", userId).single();
+  businessId = biz.id;
 
   const { data: a } = await admin
     .from("clients")
@@ -227,6 +229,42 @@ async function run() {
     renamed?.full_name === "אורי אחרי עריכה",
     renamed?.full_name ?? "null",
   );
+
+  /* ------------------------------------------------ intake answers show up */
+  const { data: intakeForm } = await admin
+    .from("intake_forms")
+    .insert({
+      business_id: businessId,
+      name: "שאלון בדיקה",
+      questions: [{ id: "text-1", kind: "text", prompt: "מה גודל החדר?" }],
+    })
+    .select("id")
+    .single();
+
+  await admin.from("intake_requests").insert([
+    {
+      business_id: businessId,
+      form_id: intakeForm.id,
+      client_id: ids.withPhone,
+      form_name: "שאלון בדיקה",
+      questions: [{ id: "text-1", kind: "text", prompt: "מה גודל החדר?" }],
+      answers: { "text-1": "שלושה על ארבעה" },
+      submitted_at: new Date().toISOString(),
+    },
+    {
+      business_id: businessId,
+      form_id: intakeForm.id,
+      client_id: ids.withPhone,
+      form_name: "שאלון שני",
+      questions: [{ id: "text-1", kind: "text", prompt: "מה גודל החדר?" }],
+    },
+  ]);
+
+  await page.goto(`${BASE}/dashboard/clients/${ids.withPhone}`, { waitUntil: "networkidle" });
+  const hubText = await page.locator("body").innerText();
+  check("an answered questionnaire shows its question", hubText.includes("מה גודל החדר?"));
+  check("and its answer", hubText.includes("שלושה על ארבעה"));
+  check("an unanswered one says so", hubText.includes("טרם נענה"));
 
   await browser.close();
 }

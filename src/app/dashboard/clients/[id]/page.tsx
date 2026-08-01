@@ -13,6 +13,7 @@ import { buildWhatsAppChatUrl } from "@/lib/whatsapp";
 
 import { ClientForm } from "../client-form";
 import { DeleteClientButton } from "../delete-client-button";
+import { IntakeAnswersCard, type IntakeRequestRow } from "./intake-answers";
 import { SendIntake } from "./send-intake";
 
 export const metadata: Metadata = {
@@ -63,6 +64,22 @@ export default async function ClientPage({
     .select("id, name")
     .eq("business_id", business.id)
     .order("created_at", { ascending: false });
+
+  /*
+   * The questions are read from the request row rather than the saved form:
+   * each request carries its own snapshot, so this shows what was actually
+   * asked even after the owner edited or deleted the saved questionnaire.
+   * Nothing on this screen is calculated from the answers - pricing stays
+   * manual, by design.
+   */
+  const { data: intakeRows } = await supabase
+    .from("intake_requests")
+    .select("id, form_name, questions, answers, sent_at, submitted_at")
+    .eq("client_id", client.id)
+    .eq("business_id", business.id)
+    .order("sent_at", { ascending: false });
+
+  const intakeRequests = (intakeRows ?? []) as IntakeRequestRow[];
 
   // One parse, used by both links. A number that will not normalise gets no
   // buttons at all rather than buttons that reach the wrong person.
@@ -171,6 +188,19 @@ export default async function ClientPage({
           </ul>
         )}
       </section>
+
+      {/* Only when something was sent. An empty-state box for a feature this owner
+          may never use would be noise on the page they open most. */}
+      {intakeRequests.length > 0 ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-semibold">שאלונים</h2>
+          <div className="grid gap-2 lg:grid-cols-2">
+            {intakeRequests.map((request) => (
+              <IntakeAnswersCard key={request.id} request={request} />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/*
         Editing is demoted rather than removed. It is the rarest thing done on
