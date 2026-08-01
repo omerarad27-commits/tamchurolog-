@@ -108,8 +108,16 @@ export function AccessibilityWidget() {
           Bottom left — the far side from where the eye starts a line of
           Hebrew, so it never lands on top of the text being read. Fixed at the
           same 48px as every other touch target in the app.
+
+          On a phone it clears the dashboard's bottom tab bar, which is h-14
+          plus the safe-area inset and was sitting directly under this button.
+          The same lift applies on the public pages, which have no bar: a
+          floating button an inch off the bottom edge is out of the way of the
+          browser's own chrome there too, so one rule beats teaching the widget
+          which layout it is in. From md up the bar becomes a side rail and the
+          ordinary corner is free again.
         */
-        className="fixed bottom-4 left-4 z-50 flex h-control w-control items-center justify-center rounded-full bg-brand text-brand-foreground shadow-lg transition-colors hover:bg-brand/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-4 z-50 flex h-control w-control items-center justify-center rounded-full bg-brand text-brand-foreground shadow-lg transition-colors hover:bg-brand/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand md:bottom-4"
       >
         <AccessibilityIcon />
       </button>
@@ -124,7 +132,7 @@ export function AccessibilityWidget() {
           margin. backdrop styling is in globals.css, which is the only place
           ::backdrop can be reached from.
         */
-        className="fixed inset-auto bottom-4 left-4 m-0 max-h-[85dvh] w-[min(22rem,calc(100vw-2rem))] overflow-y-auto rounded-card border border-border bg-surface p-5 text-foreground shadow-xl"
+        className="fixed inset-auto bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-4 m-0 max-h-[75dvh] w-[min(22rem,calc(100vw-2rem))] overflow-y-auto rounded-card border border-border bg-surface p-5 text-foreground shadow-xl md:bottom-4 md:max-h-[85dvh]"
       >
         <div className="flex items-start justify-between gap-4">
           <h2 id="a11y-menu-title" className="text-lg font-bold">
