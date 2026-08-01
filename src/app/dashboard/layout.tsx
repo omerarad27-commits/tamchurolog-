@@ -3,6 +3,7 @@ import Image from "next/image";
 import { requireBusiness } from "@/lib/auth";
 
 import { DashboardNav } from "./nav";
+import { NotificationBell } from "./notification-bell";
 import { SignOutButton } from "./sign-out-button";
 
 export default async function DashboardLayout({
@@ -14,10 +15,10 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-full flex-1 flex-col">
       {/*
-        Every page here opens with four navigation links and a sign-out button,
-        so a keyboard user tabs through six controls on every single load before
-        reaching the page they asked for. Hidden until focused, which is the
-        only time it has anything to say.
+        Every page here opens with five navigation links, a notification bell
+        and a sign-out button, so a keyboard user tabs through seven controls
+        on every single load before reaching the page they asked for. Hidden
+        until focused, which is the only time it has anything to say.
 
         Placed before the header so it is the first thing focus reaches.
       */}
@@ -52,6 +53,7 @@ export default async function DashboardLayout({
             <p className="truncate text-xs text-muted">{user.email}</p>
           </div>
 
+          <NotificationBell />
           <SignOutButton />
         </div>
       </header>

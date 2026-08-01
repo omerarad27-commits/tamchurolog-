@@ -28,7 +28,8 @@
     "verify:client-hub": "node --env-file=.env.local scripts/verify-client-hub.mjs",
     "verify:forms": "node --env-file=.env.local scripts/verify-forms.mjs",
     "verify:landing": "node --env-file=.env.local scripts/verify-landing.mjs",
-    "verify:intake": "node --env-file=.env.local scripts/verify-intake.mjs"
+    "verify:intake": "node --env-file=.env.local scripts/verify-intake.mjs",
+    "verify:notifications": "node --env-file=.env.local scripts/verify-notifications.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
