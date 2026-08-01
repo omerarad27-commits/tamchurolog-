@@ -29,7 +29,8 @@
     "verify:forms": "node --env-file=.env.local scripts/verify-forms.mjs",
     "verify:landing": "node --env-file=.env.local scripts/verify-landing.mjs",
     "verify:intake": "node --env-file=.env.local scripts/verify-intake.mjs",
-    "verify:notifications": "node --env-file=.env.local scripts/verify-notifications.mjs"
+    "verify:notifications": "node --env-file=.env.local scripts/verify-notifications.mjs",
+    "verify:quote-approval": "node --env-file=.env.local scripts/verify-quote-approval.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
