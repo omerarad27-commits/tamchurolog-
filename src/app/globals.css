@@ -133,6 +133,117 @@ body {
   }
 }
 
+/*
+  Accessibility adjustments.
+
+  Everything here hangs off a data-a11y-* attribute that the menu writes onto
+  <html>, and the menu writes nothing for an off value. So on a page nobody has
+  adjusted, not one of these rules matches an element: the feature costs the
+  default experience nothing.
+
+  Almost all of it is token overrides rather than new styling. The app paints
+  through --background, --foreground and the rest everywhere, so high contrast
+  reaches screens written long after this block — including ones that do not
+  exist yet.
+*/
+
+/* Text size. Every measurement in the app is in rem, so type, spacing and
+   touch targets grow together and the layout stays in proportion. */
+html[data-a11y-font="large"] {
+  font-size: 112.5%;
+}
+
+html[data-a11y-font="larger"] {
+  font-size: 125%;
+}
+
+/* High contrast. Surfaces go white and text goes black; the tinted status
+   backgrounds stay, because removing them would take the badges down to colour
+   alone at exactly the moment someone needs them clearest. Their text darkens
+   instead, and the borders darken to keep cards apart on a single white field. */
+html[data-a11y-contrast="high"] {
+  --background: #ffffff;
+  --surface: #ffffff;
+  --foreground: #000000;
+  --muted: #2b3140;
+  --border: #4a5163;
+  --brand: #0b3ea8;
+  --success: #044d2e;
+  --warning: #6b3300;
+  --danger: #8c1109;
+}
+
+/* Dark. The site is light-only by design, so this is the menu's job rather
+   than a theme: the same tokens, inverted, with the brand lightened enough to
+   read on a dark field and its foreground darkened to sit on the lightened
+   brand. */
+html[data-a11y-contrast="dark"] {
+  --background: #0b0f19;
+  --surface: #151b28;
+  --foreground: #f5f7fa;
+  --muted: #a8b3c5;
+  --border: #2c3648;
+  --brand: #7ea6ff;
+  --brand-soft: #1b2942;
+  --brand-foreground: #0b0f19;
+  --success: #5ddba4;
+  --success-soft: #10281f;
+  --warning: #f5b544;
+  --warning-soft: #2a1f0c;
+  --danger: #ff8a80;
+  --danger-soft: #2c1512;
+}
+
+html[data-a11y-links="on"] a {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+}
+
+/* Not display:none on animation — collapsing the duration keeps every
+   transitionend and animationend listener firing, so nothing that waits on one
+   is left hanging. Same shape as the prefers-reduced-motion recipe. */
+html[data-a11y-motion="on"],
+html[data-a11y-motion="on"] *,
+html[data-a11y-motion="on"] *::before,
+html[data-a11y-motion="on"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Rubik is a fine Hebrew face, but its ד/ר and ה/ח pairs separate on fine
+   detail. Arial's are blunter and further apart, which is the trade someone
+   asking for a readable font is asking to make. */
+html[data-a11y-readable="on"] {
+  --font-sans: Arial, "Segoe UI", system-ui, sans-serif;
+}
+
+html[data-a11y-readable="on"] body {
+  font-family: Arial, "Segoe UI", system-ui, sans-serif;
+  letter-spacing: 0.01em;
+  word-spacing: 0.05em;
+}
+
+/* Large cursor. The `auto` fallback matters: if the data URI is ever blocked,
+   the visitor gets the ordinary pointer rather than none. */
+html[data-a11y-cursor="on"],
+html[data-a11y-cursor="on"] * {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24'%3E%3Cpath d='M5 2l14 10.5-6.2.6 3.4 6.8-2.8 1.4-3.4-6.9L5 19z' fill='%23fff' stroke='%23000' stroke-width='1.5' stroke-linejoin='round'/%3E%3C/svg%3E")
+      2 2,
+    auto;
+}
+
+/* The accessibility menu's backdrop. ::backdrop is only reachable from a
+   stylesheet, never from a className. */
+dialog::backdrop {
+  background: rgb(16 24 40 / 0.5);
+}
+
 /* Prices, quantities and dates must stay legible inside RTL text. */
 .numeric {
   font-variant-numeric: tabular-nums;

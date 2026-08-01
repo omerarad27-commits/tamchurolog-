@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Rubik } from "next/font/google";
 
+import { AccessibilityWidget } from "@/components/a11y/accessibility-widget";
+import { A11ySettingsScript } from "@/components/a11y/settings-script";
+
 import "./globals.css";
 
 /*
@@ -70,7 +73,34 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       dir="rtl"
       className={`${rubik.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        {/*
+          Before anything renders: a visitor who chose high contrast should
+          never see a frame of the ordinary page first.
+        */}
+        <A11ySettingsScript />
+
+        {/*
+          The skip link, first in the tab order of every page in the app.
+          Hidden until focused, which is the only moment it has anything to
+          say. Fixed rather than absolute so it lands in the same corner
+          whatever the page's own positioning happens to be.
+        */}
+        <a
+          href="#main"
+          className="sr-only rounded-control bg-brand px-4 py-2 font-semibold text-brand-foreground focus:not-sr-only focus:fixed focus:top-3 focus:right-3 focus:z-50"
+        >
+          דילוג לתוכן
+        </a>
+
+        {children}
+
+        {/*
+          Last in the DOM, so the menu is the final thing a screen reader
+          reaches rather than an interruption before the page itself.
+        */}
+        <AccessibilityWidget />
+      </body>
     </html>
   );
 }

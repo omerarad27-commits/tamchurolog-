@@ -27,7 +27,7 @@ export default async function NotFound() {
 
 function notFoundBody() {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-4 px-5 py-16 text-center">
+    <main id="main" tabIndex={-1} className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-4 px-5 py-16 text-center">
       {/*
         The number was the h1 and the sentence was a paragraph, so the only
         heading on the page was "404". Swapped: the digits are decoration and

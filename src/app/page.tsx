@@ -65,7 +65,7 @@ export default async function HomePage() {
       the form comes second — on a phone the reason to sign up has to arrive
       before the form asking you to.
     */
-    <main className="mx-auto flex w-full max-w-app flex-1 flex-col justify-center gap-8 px-5 py-10 lg:flex-row lg:items-center lg:gap-16 lg:py-16">
+    <main id="main" tabIndex={-1} className="mx-auto flex w-full max-w-app flex-1 flex-col justify-center gap-8 px-5 py-10 lg:flex-row lg:items-center lg:gap-16 lg:py-16">
       <div className="flex w-full flex-col gap-6 lg:max-w-lg">
         <header className="flex items-center gap-3">
           <span

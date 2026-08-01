@@ -22,7 +22,7 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-4 px-5 py-16 text-center">
+    <main id="main" tabIndex={-1} className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-4 px-5 py-16 text-center">
       <h1 className="text-xl font-bold">משהו השתבש</h1>
       <p className="text-sm leading-relaxed text-muted">
         התקלה נרשמה אצלנו. אפשר לנסות שוב, ואם זה חוזר כדאי לרענן את הדף.

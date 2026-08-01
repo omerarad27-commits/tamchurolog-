@@ -7,7 +7,7 @@
  */
 export function RevokedQuote() {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-3 px-5 py-16 text-center">
+    <main id="main" tabIndex={-1} className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-3 px-5 py-16 text-center">
       <span
         aria-hidden="true"
         className="flex h-14 w-14 items-center justify-center rounded-tile bg-warning-soft text-2xl text-warning"

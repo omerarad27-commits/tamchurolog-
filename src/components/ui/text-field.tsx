@@ -7,7 +7,9 @@ import type { ComponentProps } from "react";
  */
 export const inputClasses =
   "h-control w-full rounded-control border border-border bg-surface px-3 text-base " +
-  "placeholder:text-muted/70 " +
+  /* Full --muted, not muted/70: the faded version came out at about 3.2:1
+     against the field, under the 4.5 that placeholder text has to clear. */
+  "placeholder:text-muted " +
   "focus:border-brand focus:outline-2 focus:outline-offset-0 focus:outline-brand";
 
 type TextFieldProps = ComponentProps<"input"> & {

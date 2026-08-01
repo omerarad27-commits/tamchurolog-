@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 
 /**
- * The landing page, and nothing else.
+ * The landing page and the accessibility statement, and nothing else.
  *
  * Every other route is either behind a login or is somebody's private quote.
  * This file must never learn how to enumerate /q: a sitemap is a published
@@ -17,6 +17,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 1,
+    },
+    {
+      /* The statement is meant to be findable, including from off the site. */
+      url: `${SITE_URL}/accessibility`,
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+      priority: 0.3,
     },
   ];
 }

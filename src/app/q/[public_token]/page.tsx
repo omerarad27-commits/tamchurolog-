@@ -114,7 +114,7 @@ export default async function PublicQuotePage({
       More air above and below on a larger screen, so the document sits on the
       page instead of being pinned to the top of the window.
     */
-    <main className="mx-auto flex w-full max-w-document flex-1 flex-col gap-4 px-4 py-6 md:gap-5 md:py-12">
+    <main id="main" tabIndex={-1} className="mx-auto flex w-full max-w-document flex-1 flex-col gap-4 px-4 py-6 md:gap-5 md:py-12">
       {/* ------------------------------------------------------- business */}
       <header className="flex items-center gap-3">
         {quote.business.logoUrl ? (
@@ -338,6 +338,19 @@ export default async function PublicQuotePage({
           className="font-semibold text-brand hover:underline"
         >
           תמחורולוג
+        </Link>
+        {" · "}
+        {/*
+          The statement has to be reachable without the floating button — the
+          button is gone on paper, and a link is what a screen reader finds by
+          walking the page.
+        */}
+        <Link
+          href="/accessibility"
+          prefetch={false}
+          className="font-semibold text-brand hover:underline"
+        >
+          הצהרת נגישות
         </Link>
       </footer>
     </main>

@@ -46,7 +46,7 @@ export default async function PublicIntakePage({
   if (!request) notFound();
 
   return (
-    <main className="mx-auto flex w-full max-w-form flex-col gap-5 px-5 py-8">
+    <main id="main" tabIndex={-1} className="mx-auto flex w-full max-w-form flex-col gap-5 px-5 py-8">
       <header>
         <p className="text-sm text-muted">{request.businessName}</p>
         <h1 className="mt-1 text-2xl font-bold">כמה שאלות לפני שמתמחרים</h1>

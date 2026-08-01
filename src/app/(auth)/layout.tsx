@@ -2,7 +2,16 @@ import Link from "next/link";
 
 export default function AuthLayout({ children }: LayoutProps<"/">) {
   return (
-    <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-6 px-5 py-10">
+    /*
+      A <main>, not a <div>: these were the only two pages in the app with no
+      main landmark, which left a screen reader nothing to jump to and the skip
+      link nowhere to land.
+    */
+    <main
+      id="main"
+      tabIndex={-1}
+      className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-6 px-5 py-10"
+    >
       <Link href="/" className="flex items-center gap-3 self-center">
         <span
           aria-hidden="true"
@@ -16,6 +25,6 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
       <div className="rounded-card border border-border bg-surface p-5 shadow-sm">
         {children}
       </div>
-    </div>
+    </main>
   );
 }

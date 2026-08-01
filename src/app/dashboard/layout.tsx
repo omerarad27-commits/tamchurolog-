@@ -15,20 +15,10 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-full flex-1 flex-col">
       {/*
-        Every page here opens with five navigation links, a notification bell
-        and a sign-out button, so a keyboard user tabs through seven controls
-        on every single load before reaching the page they asked for. Hidden
-        until focused, which is the only time it has anything to say.
-
-        Placed before the header so it is the first thing focus reaches.
+        The skip link that used to live here now sits in the root layout: every
+        public page needed one too, and one link before <body>'s content beats
+        a copy per layout. The #main it targets is the <main> below.
       */}
-      <a
-        href="#main"
-        className="sr-only rounded-control bg-brand px-4 py-2 font-semibold text-brand-foreground focus:not-sr-only focus:absolute focus:top-3 focus:right-3 focus:z-50"
-      >
-        דילוג לתוכן
-      </a>
-
       <header className="border-b border-border bg-surface">
         <div className="mx-auto flex w-full max-w-app items-center gap-3 px-5 py-3">
           {business.logo_url ? (

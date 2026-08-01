@@ -28,7 +28,8 @@ export function TextArea({
         aria-describedby={hintId}
         className={
           "w-full rounded-control border border-border bg-surface px-3 py-2.5 text-base leading-relaxed " +
-          "placeholder:text-muted/70 " +
+          /* Matches text-field.tsx: the faded muted fell under 4.5:1. */
+          "placeholder:text-muted " +
           "focus:border-brand focus:outline-2 focus:outline-offset-0 focus:outline-brand " +
           className
         }
