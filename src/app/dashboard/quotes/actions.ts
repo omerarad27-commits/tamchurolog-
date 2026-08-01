@@ -106,6 +106,10 @@ export async function createQuoteAction(
 
   const validUntilRaw = String(formData.get("validUntil") ?? "").trim();
   const notes = String(formData.get("notes") ?? "").trim();
+  /* Optional, and capped to match the check constraint on the column. */
+  const title = String(formData.get("title") ?? "")
+    .trim()
+    .slice(0, 80);
 
   /* Resolve the client: either an existing one, or quick-added inline. */
   let clientId = String(formData.get("clientId") ?? "").trim();
@@ -160,6 +164,7 @@ export async function createQuoteAction(
     .insert({
       business_id: business.id,
       client_id: clientId,
+      title: title || null,
       valid_until: validUntilRaw || null,
       notes: notes || null,
       vat_rate: withVat ? VAT_RATE : 0,
@@ -244,6 +249,8 @@ export async function updateQuoteAction(
     .from("quotes")
     .update({
       client_id: clientId,
+      title:
+        String(formData.get("title") ?? "").trim().slice(0, 80) || null,
       valid_until: String(formData.get("validUntil") ?? "").trim() || null,
       notes: String(formData.get("notes") ?? "").trim() || null,
       vat_rate: withVat ? VAT_RATE : 0,

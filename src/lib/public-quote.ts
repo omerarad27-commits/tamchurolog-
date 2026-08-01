@@ -19,6 +19,8 @@ const TOKEN_PATTERN = /^[0-9a-f]{32}$/;
 export type PublicQuote = {
   id: string;
   quoteNumber: number;
+  /** The subject of the work. Null on quotes written without one. */
+  title: string | null;
   status: QuoteStatus;
   issuedAt: string;
   validUntil: string | null;
@@ -74,7 +76,7 @@ export async function loadPublicQuote(
   const { data: quote } = await supabase
     .from("quotes")
     .select(
-      "id, business_id, client_id, quote_number, status, issued_at, valid_until, notes, subtotal, tax_amount, vat_rate, total, decision_signature_name, decided_at",
+      "id, business_id, client_id, quote_number, title, status, issued_at, valid_until, notes, subtotal, tax_amount, vat_rate, total, decision_signature_name, decided_at",
     )
     .eq("public_token", token)
     .maybeSingle();
@@ -103,6 +105,7 @@ export async function loadPublicQuote(
   return {
     id: quote.id,
     quoteNumber: quote.quote_number,
+    title: quote.title,
     status: quote.status,
     issuedAt: quote.issued_at,
     validUntil: quote.valid_until,

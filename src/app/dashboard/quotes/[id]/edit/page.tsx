@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { requireBusiness } from "@/lib/auth";
@@ -22,7 +21,7 @@ export default async function EditQuotePage({
   const { data: quoteRow } = await supabase
     .from("quotes")
     .select(
-      "id, business_id, client_id, quote_number, status, issued_at, sent_at, valid_until, notes, subtotal, tax_amount, total, vat_rate, lines_total, prices_include_vat, public_token, first_viewed_at, last_viewed_at, decision_signature_name, decided_at, decision_reason, reminded_at, created_at, updated_at",
+      "id, business_id, client_id, title, quote_number, status, issued_at, sent_at, valid_until, notes, subtotal, tax_amount, total, vat_rate, lines_total, prices_include_vat, public_token, first_viewed_at, last_viewed_at, decision_signature_name, decided_at, decision_reason, reminded_at, created_at, updated_at",
     )
     .eq("id", id)
     .eq("business_id", business.id)
@@ -55,6 +54,7 @@ export default async function EditQuotePage({
   const draft: QuoteDraft = {
     id: quote.id,
     clientId: quote.client_id,
+    title: quote.title ?? "",
     validUntil: quote.valid_until ?? "",
     notes: quote.notes ?? "",
     withVat: Number(quote.vat_rate) > 0,
@@ -70,12 +70,6 @@ export default async function EditQuotePage({
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <Link
-          href={`/dashboard/quotes/${quote.id}`}
-          className="text-sm font-medium text-muted hover:text-foreground"
-        >
-          <span aria-hidden="true">›</span> חזרה להצעה
-        </Link>
         <h1 className="numeric mt-2 text-2xl font-bold">
           עריכת הצעה #{quote.quote_number}
         </h1>

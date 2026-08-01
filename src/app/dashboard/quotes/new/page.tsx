@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { requireBusiness } from "@/lib/auth";
 import { defaultChargesVat, toBusinessType } from "@/lib/business-type";
@@ -48,12 +47,6 @@ export default async function NewQuotePage({
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <Link
-          href="/dashboard"
-          className="text-sm font-medium text-muted hover:text-foreground"
-        >
-          <span aria-hidden="true">›</span> חזרה להצעות
-        </Link>
         <h1 className="mt-2 text-2xl font-bold">הצעה חדשה</h1>
       </div>
 

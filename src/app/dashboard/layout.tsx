@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { DashboardBackLink } from "@/components/dashboard-back-link";
 import { requireBusiness } from "@/lib/auth";
 
 import { DashboardNav } from "./nav";
@@ -61,8 +62,14 @@ export default async function DashboardLayout({
           id="main"
           // Focusable only as a skip-link destination, never in the tab order.
           tabIndex={-1}
-          className="w-full min-w-0 flex-1 px-5 py-6 md:px-0 md:py-8"
+          className="flex w-full min-w-0 flex-1 flex-col px-5 py-6 md:px-0 md:py-8"
         >
+          {/*
+            Inside <main> rather than above it, so the skip link lands before
+            it: someone jumping past the navigation still gets the way out of
+            this screen as the first thing they meet.
+          */}
+          <DashboardBackLink />
           {children}
         </main>
 

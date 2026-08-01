@@ -63,17 +63,29 @@ export function buildQuoteMessage({
   businessName,
   clientName,
   quoteUrl,
+  quoteTitle,
 }: {
   businessName: string;
   clientName: string;
   quoteUrl: string;
+  /** The subject of the work. Absent on quotes written without one. */
+  quoteTitle?: string | null;
 }): string {
   const greeting = clientName ? `היי ${firstName(clientName)},` : "היי,";
+
+  /*
+   * The subject goes in the line above the link, which is the last thing read
+   * before the tap. A client with two quotes open in the same chat can tell
+   * which link is which without opening either.
+   */
+  const subject = quoteTitle?.trim();
 
   return [
     `${greeting} כאן ${businessName}.`,
     "",
-    "מצורפת הצעת המחיר שהכנתי עבורך:",
+    subject
+      ? `מצורפת הצעת המחיר שהכנתי עבור ${subject}:`
+      : "מצורפת הצעת המחיר שהכנתי עבורך:",
     quoteUrl,
     "",
     "אפשר לאשר אותה ישירות מהקישור. אשמח לשמוע מה דעתך.",

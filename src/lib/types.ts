@@ -36,6 +36,13 @@ export type Quote = {
   business_id: string;
   client_id: string;
   quote_number: number;
+  /**
+   * What the work is, in the owner's words: "shiputs hadar ambatya".
+   *
+   * Null on every quote written before the field existed, and on any the owner
+   * chose to leave blank, so every reader has to have a fallback.
+   */
+  title: string | null;
   status: QuoteStatus;
   issued_at: string;
   sent_at: string | null;

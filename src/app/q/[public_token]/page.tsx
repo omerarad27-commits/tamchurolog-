@@ -36,7 +36,11 @@ export async function generateMetadata({
     return { title: "הצעת מחיר", robots };
   }
 
-  const title = `הצעת מחיר מ${quote.business.name}`;
+  /* The subject first: in a phone's tab strip, the business name is the part
+     that can afford to be truncated. */
+  const title = quote.title
+    ? `${quote.title} — הצעת מחיר מ${quote.business.name}`
+    : `הצעת מחיר מ${quote.business.name}`;
   // The amount is deliberately left out of the preview: these links get pasted
   // into group chats, and the price should only appear once the page is
   // actually opened. The generated card follows the same rule.
@@ -213,7 +217,17 @@ export default async function PublicQuotePage({
       {/* ---------------------------------------------------------- quote */}
       <section className="overflow-hidden rounded-card border border-border bg-surface shadow-sm">
         <div className="border-b border-border px-5 py-4">
-          <h1 className="text-2xl font-bold md:text-3xl">הצעת מחיר</h1>
+          {/*
+            The subject belongs in the h1 rather than under it. A client
+            holding three quotes from the same tradesperson gets told which one
+            this is by the first line they read, and by the browser tab.
+
+            Quotes written before the field existed have no title, and fall
+            back to exactly the heading they have always had.
+          */}
+          <h1 className="text-2xl font-bold md:text-3xl">
+            {quote.title ? `הצעת מחיר עבור ${quote.title}` : "הצעת מחיר"}
+          </h1>
           {/* The digits are isolated, the line is not. Putting .numeric on the
               paragraph turned the whole line LTR and left-aligned it under a
               right-aligned title. */}
@@ -223,7 +237,9 @@ export default async function PublicQuotePage({
           </p>
           {quote.clientName ? (
             <p className="mt-2 text-sm">
-              <span className="text-muted">עבור: </span>
+              {/* "לכבוד", not "עבור": now that the heading says what the quote
+                  is for, the same word cannot also mean who it is for. */}
+              <span className="text-muted">לכבוד: </span>
               <span className="font-semibold">{quote.clientName}</span>
             </p>
           ) : null}

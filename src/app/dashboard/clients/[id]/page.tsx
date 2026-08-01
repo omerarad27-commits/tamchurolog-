@@ -23,6 +23,7 @@ export const metadata: Metadata = {
 /** Only the columns the list actually renders. */
 type ClientQuote = {
   id: string;
+  title: string | null;
   quote_number: number;
   status: QuoteStatus;
   total: string;
@@ -52,7 +53,7 @@ export default async function ClientPage({
    */
   const { data: quoteRows } = await supabase
     .from("quotes")
-    .select("id, quote_number, status, total, issued_at")
+    .select("id, title, quote_number, status, total, issued_at")
     .eq("client_id", client.id)
     .eq("business_id", business.id)
     .order("issued_at", { ascending: false });
@@ -91,12 +92,6 @@ export default async function ClientPage({
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <Link
-          href="/dashboard/clients"
-          className="text-sm font-medium text-muted hover:text-foreground"
-        >
-          <span aria-hidden="true">›</span> חזרה ללקוחות
-        </Link>
         <h1 className="mt-2 truncate text-2xl font-bold">{client.full_name}</h1>
         {phone ? (
           // .numeric on the paragraph would turn the whole line LTR and drag
@@ -173,6 +168,12 @@ export default async function ClientPage({
                       </span>
                       <StatusBadge status={quote.status} />
                     </div>
+                    {/* Every quote in this list is for the same client, so
+                        the subject is the only thing that tells them apart at
+                        a glance. */}
+                    {quote.title ? (
+                      <p className="mt-0.5 truncate text-sm">{quote.title}</p>
+                    ) : null}
                     {/* Same rule as above: the digits are isolated, the line
                         is not, so the date stays at the start of an RTL row. */}
                     <p className="mt-0.5 text-sm text-muted">

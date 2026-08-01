@@ -26,6 +26,7 @@ type DraftLine = {
 export type QuoteDraft = {
   id: string;
   clientId: string;
+  title: string;
   validUntil: string;
   notes: string;
   withVat: boolean;
@@ -208,6 +209,23 @@ export function QuoteBuilder({
             />
           </div>
         ) : null}
+
+        {/*
+          The subject, next to the client rather than down with the notes: it
+          is the heading of the document, and the two questions at the top of
+          this form are now who it is for and what it is for.
+
+          Optional. Every quote written before this field existed has none, and
+          the client's page falls back to its old wording when it is empty.
+        */}
+        <TextField
+          label="נושא ההצעה"
+          name="title"
+          maxLength={80}
+          defaultValue={draft?.title ?? ""}
+          placeholder="לדוגמה: שיפוץ חדר אמבטיה"
+          hint="מופיע ככותרת ההצעה אצל הלקוח ובהודעת הוואטסאפ. לא חובה."
+        />
       </section>
 
       {/* ----------------------------------------------------- line items */}

@@ -57,7 +57,7 @@ export default async function DashboardPage({
   const { data, error } = await supabase
     .from("quotes")
     .select(
-      "id, business_id, client_id, quote_number, status, issued_at, sent_at, valid_until, notes, subtotal, tax_amount, total, public_token, first_viewed_at, last_viewed_at, decision_signature_name, decided_at, decision_reason, reminded_at, created_at, updated_at, clients (id, full_name, phone)",
+      "id, business_id, client_id, title, quote_number, status, issued_at, sent_at, valid_until, notes, subtotal, tax_amount, total, public_token, first_viewed_at, last_viewed_at, decision_signature_name, decided_at, decision_reason, reminded_at, created_at, updated_at, clients (id, full_name, phone)",
     )
     .eq("business_id", business.id)
     .order("quote_number", { ascending: false });
@@ -195,6 +195,12 @@ export default async function DashboardPage({
                         </p>
                         <StatusBadge status={quote.status} />
                       </div>
+                      {/* The subject, where there is one: on this list the
+                          client's name is the heading, and three quotes for
+                          the same client used to differ only by number. */}
+                      {quote.title ? (
+                        <p className="mt-0.5 truncate text-sm">{quote.title}</p>
+                      ) : null}
                       <p className="mt-0.5 text-sm text-muted">
                         הצעה <span className="numeric">#{quote.quote_number}</span>{" "}
                         ·{" "}
