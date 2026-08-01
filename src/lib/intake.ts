@@ -146,7 +146,11 @@ export function validateAnswers(
   for (const question of questions) {
     const answer = answers[question.id];
     if (answer === undefined || !answer.trim()) {
-      return "יש לענות על כל השאלות.";
+      // Names the question rather than saying "some question is missing": on
+      // a phone, with the alert rendered below five fieldsets, "יש לענות על
+      // כל השאלות" gives a stranger who submitted once no way to find the
+      // one field the message is actually about.
+      return `יש לענות על השאלה: "${question.prompt}"`;
     }
 
     if (question.kind === "choice") {

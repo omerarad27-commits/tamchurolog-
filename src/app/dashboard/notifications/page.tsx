@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { requireBusiness } from "@/lib/auth";
 import { formatDateTime } from "@/lib/format";
 import {
   loadNotifications,
@@ -19,8 +20,9 @@ export default async function NotificationsPage() {
    * The next visit sees them all as read, which is the correct answer: the
    * owner has now looked at them.
    */
-  const notifications = await loadNotifications();
-  await markAllNotificationsRead();
+  const context = await requireBusiness();
+  const notifications = await loadNotifications(context);
+  await markAllNotificationsRead(context);
 
   return (
     <div className="flex flex-col gap-5">

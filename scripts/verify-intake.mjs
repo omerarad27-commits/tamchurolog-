@@ -88,6 +88,9 @@ async function run() {
   await page.getByText("שליחת שאלון").click();
   await page.selectOption('select[name="formId"]', form.id);
   await page.getByRole("button", { name: "הכנת קישור" }).click();
+  // Two such links can now exist: the send-questionnaire panel's own, and the
+  // one Finding A added to the (now-visible) unanswered card above it. This
+  // test is about the send panel's own link, which sits last in DOM order.
   await page.waitForSelector('a:has-text("שליחה בוואטסאפ")', { timeout: 20000 });
 
   const { data: request } = await admin
@@ -110,7 +113,7 @@ async function run() {
   check("the form name was snapshotted", request?.form_name === "שאלון בדיקה");
   check("nothing is answered yet", request?.answers === null);
 
-  const waHref = await page.locator('a:has-text("שליחה בוואטסאפ")').getAttribute("href");
+  const waHref = await page.locator('a:has-text("שליחה בוואטסאפ")').last().getAttribute("href");
   check(
     "the WhatsApp link carries the token and the right recipient",
     waHref.includes(request.public_token) && waHref.startsWith("https://wa.me/972541234567"),

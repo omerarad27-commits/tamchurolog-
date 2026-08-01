@@ -53,7 +53,7 @@ export default async function DashboardLayout({
             <p className="truncate text-xs text-muted">{user.email}</p>
           </div>
 
-          <NotificationBell />
+          <NotificationBell businessId={business.id} />
           <SignOutButton />
         </div>
       </header>

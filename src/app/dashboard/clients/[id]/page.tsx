@@ -74,7 +74,9 @@ export default async function ClientPage({
    */
   const { data: intakeRows } = await supabase
     .from("intake_requests")
-    .select("id, form_name, questions, answers, sent_at, submitted_at")
+    .select(
+      "id, form_name, questions, answers, sent_at, submitted_at, public_token",
+    )
     .eq("client_id", client.id)
     .eq("business_id", business.id)
     .order("sent_at", { ascending: false });
@@ -196,7 +198,13 @@ export default async function ClientPage({
           <h2 className="text-lg font-semibold">שאלונים</h2>
           <div className="grid gap-2 lg:grid-cols-2">
             {intakeRequests.map((request) => (
-              <IntakeAnswersCard key={request.id} request={request} />
+              <IntakeAnswersCard
+                key={request.id}
+                request={request}
+                businessName={business.name}
+                clientName={client.full_name}
+                clientPhone={client.phone}
+              />
             ))}
           </div>
         </section>

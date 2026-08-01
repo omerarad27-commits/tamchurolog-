@@ -1,6 +1,7 @@
 import "server-only";
 
 import { requireBusiness } from "@/lib/auth";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type NotificationKind = "intake_submitted" | "quote_approved";
 
@@ -13,6 +14,22 @@ export type Notification = {
   quote_id: string | null;
   read_at: string | null;
   created_at: string;
+};
+
+/**
+ * A notification with its client resolved, for the link only.
+ *
+ * `notifications` carries `intake_request_id`, not a client id, so the client
+ * behind an `intake_submitted` row is looked up separately in
+ * `loadNotifications` - one `.in(...)` query for the whole page, not one per
+ * row. `clientId` is null when the request or its client no longer exists,
+ * and `notificationHref` falls back to the list in that case rather than
+ * building a broken link. This is deliberately not part of `Notification`
+ * itself: `notificationText` stays a pure function of the database row, so
+ * its wording never depends on something that can disappear.
+ */
+export type NotificationWithClient = Notification & {
+  clientId: string | null;
 };
 
 const COLUMNS =
@@ -48,27 +65,49 @@ export function notificationText(notification: Notification): string {
 }
 
 /** Where tapping it goes. Falls back to the list when the target is gone. */
-export function notificationHref(notification: Notification): string {
+export function notificationHref(notification: NotificationWithClient): string {
   if (notification.kind === "quote_approved" && notification.quote_id) {
     return `/dashboard/quotes/${notification.quote_id}`;
+  }
+  if (notification.kind === "intake_submitted" && notification.clientId) {
+    return `/dashboard/clients/${notification.clientId}`;
   }
   return "/dashboard/notifications";
 }
 
-export async function unreadNotificationCount(): Promise<number> {
-  const { supabase, business } = await requireBusiness();
+/**
+ * Takes the business id rather than calling `requireBusiness` itself.
+ *
+ * `requireBusiness` is not memoised, so every call is an auth round trip plus
+ * a `businesses` select. `<NotificationBell>` renders on every dashboard page
+ * next to a layout that already called `requireBusiness` once; having the
+ * bell call it again doubled that cost on every single page load. The caller
+ * is trusted to have already authenticated - RLS still scopes the query to
+ * whatever business the signed-in session actually owns.
+ */
+export async function unreadNotificationCount(
+  businessId: string,
+): Promise<number> {
+  const supabase = await createSupabaseServerClient();
 
   const { count } = await supabase
     .from("notifications")
     .select("id", { count: "exact", head: true })
-    .eq("business_id", business.id)
+    .eq("business_id", businessId)
     .is("read_at", null);
 
   return count ?? 0;
 }
 
-export async function loadNotifications(): Promise<Notification[]> {
-  const { supabase, business } = await requireBusiness();
+/**
+ * Takes an already-authenticated context instead of calling `requireBusiness`
+ * itself, so a page that also calls `markAllNotificationsRead` pays for the
+ * auth round trip once rather than twice for the same render.
+ */
+export async function loadNotifications(
+  context: Awaited<ReturnType<typeof requireBusiness>>,
+): Promise<NotificationWithClient[]> {
+  const { supabase, business } = context;
 
   const { data } = await supabase
     .from("notifications")
@@ -77,7 +116,38 @@ export async function loadNotifications(): Promise<Notification[]> {
     .order("created_at", { ascending: false })
     .limit(50);
 
-  return (data ?? []) as Notification[];
+  const notifications = (data ?? []) as Notification[];
+
+  // One extra query for the whole page, never one per row: collect every
+  // intake_request_id the loaded rows reference and resolve them all at once.
+  const requestIds = [
+    ...new Set(
+      notifications
+        .filter((n) => n.kind === "intake_submitted" && n.intake_request_id)
+        .map((n) => n.intake_request_id as string),
+    ),
+  ];
+
+  const clientByRequest = new Map<string, string>();
+  if (requestIds.length > 0) {
+    const { data: requests } = await supabase
+      .from("intake_requests")
+      .select("id, client_id")
+      .eq("business_id", business.id)
+      .in("id", requestIds);
+
+    for (const request of requests ?? []) {
+      clientByRequest.set(request.id, request.client_id);
+    }
+  }
+
+  return notifications.map((notification) => ({
+    ...notification,
+    clientId:
+      notification.intake_request_id !== null
+        ? (clientByRequest.get(notification.intake_request_id) ?? null)
+        : null,
+  }));
 }
 
 /**
@@ -87,8 +157,10 @@ export async function loadNotifications(): Promise<Notification[]> {
  * look at them, and a list that has to be dismissed one row at a time is a
  * chore rather than a feature.
  */
-export async function markAllNotificationsRead(): Promise<void> {
-  const { supabase, business } = await requireBusiness();
+export async function markAllNotificationsRead(
+  context: Awaited<ReturnType<typeof requireBusiness>>,
+): Promise<void> {
+  const { supabase, business } = context;
 
   await supabase
     .from("notifications")

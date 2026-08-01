@@ -241,30 +241,69 @@ async function run() {
     .select("id")
     .single();
 
-  await admin.from("intake_requests").insert([
-    {
-      business_id: businessId,
-      form_id: intakeForm.id,
-      client_id: ids.withPhone,
-      form_name: "שאלון בדיקה",
-      questions: [{ id: "text-1", kind: "text", prompt: "מה גודל החדר?" }],
-      answers: { "text-1": "שלושה על ארבעה" },
-      submitted_at: new Date().toISOString(),
-    },
-    {
-      business_id: businessId,
-      form_id: intakeForm.id,
-      client_id: ids.withPhone,
-      form_name: "שאלון שני",
-      questions: [{ id: "text-1", kind: "text", prompt: "מה גודל החדר?" }],
-    },
-  ]);
+  const { data: intakeRows } = await admin
+    .from("intake_requests")
+    .insert([
+      {
+        business_id: businessId,
+        form_id: intakeForm.id,
+        client_id: ids.withPhone,
+        form_name: "שאלון בדיקה",
+        questions: [{ id: "text-1", kind: "text", prompt: "מה גודל החדר?" }],
+        answers: { "text-1": "שלושה על ארבעה" },
+        submitted_at: new Date().toISOString(),
+      },
+      {
+        business_id: businessId,
+        form_id: intakeForm.id,
+        client_id: ids.withPhone,
+        form_name: "שאלון שני",
+        questions: [{ id: "text-1", kind: "text", prompt: "מה גודל החדר?" }],
+      },
+    ])
+    .select("id, form_name, public_token, submitted_at");
+
+  const unanswered = intakeRows.find((r) => r.form_name === "שאלון שני");
 
   await page.goto(`${BASE}/dashboard/clients/${ids.withPhone}`, { waitUntil: "networkidle" });
   const hubText = await page.locator("body").innerText();
   check("an answered questionnaire shows its question", hubText.includes("מה גודל החדר?"));
   check("and its answer", hubText.includes("שלושה על ארבעה"));
   check("an unanswered one says so", hubText.includes("טרם נענה"));
+
+  /*
+   * Finding A: a prepared-but-not-yet-sent link used to live only in the
+   * useActionState of the send-questionnaire form - leave the page or lose
+   * the WhatsApp hand-off, and it was gone for good, with the only recovery
+   * being a second insert. The unanswered card itself must now carry a
+   * WhatsApp link built from the request's own token.
+   */
+  const unansweredCard = page
+    .locator("div")
+    .filter({ hasText: "שאלון שני" })
+    .filter({ hasText: "טרם נענה" })
+    .last();
+  const unansweredWa = unansweredCard.locator('a[href^="https://wa.me/"]');
+  check(
+    "the unanswered card carries its own WhatsApp link",
+    (await unansweredWa.count()) === 1,
+  );
+  const unansweredWaHref = await unansweredWa.first().getAttribute("href").catch(() => null);
+  check(
+    "and the link contains that request's own token",
+    Boolean(unansweredWaHref) && unansweredWaHref.includes(unanswered.public_token),
+    unansweredWaHref ?? "absent",
+  );
+  check(
+    "an answered card carries no WhatsApp link",
+    (await page
+      .locator("div")
+      .filter({ hasText: "שאלון בדיקה" })
+      .filter({ hasText: "שלושה על ארבעה" })
+      .last()
+      .locator('a[href^="https://wa.me/"]')
+      .count()) === 0,
+  );
 
   await browser.close();
 }

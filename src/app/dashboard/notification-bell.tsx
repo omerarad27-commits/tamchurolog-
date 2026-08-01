@@ -2,8 +2,12 @@ import Link from "next/link";
 
 import { unreadNotificationCount } from "@/lib/notifications";
 
-export async function NotificationBell() {
-  const unread = await unreadNotificationCount();
+export async function NotificationBell({
+  businessId,
+}: {
+  businessId: string;
+}) {
+  const unread = await unreadNotificationCount(businessId);
 
   return (
     <Link

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -23,6 +23,18 @@ export function IntakeForm({
     submitIntakeAction,
     EMPTY_INTAKE_STATE,
   );
+
+  // The alert renders after the last fieldset. On a phone with five
+  // questions that puts it off-screen after a tap on "שליחת התשובות" that
+  // visibly does nothing, and this is a stranger's single attempt - there is
+  // no repeat visit to eventually notice it lower on the page.
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (state.error) {
+      errorRef.current?.scrollIntoView({ block: "center" });
+      errorRef.current?.focus();
+    }
+  }, [state.error]);
 
   if (state.done) {
     return (
@@ -77,7 +89,11 @@ export function IntakeForm({
         </fieldset>
       ))}
 
-      {state.error ? <Alert>{state.error}</Alert> : null}
+      {state.error ? (
+        <Alert id="intake-form-error" ref={errorRef} tabIndex={-1}>
+          {state.error}
+        </Alert>
+      ) : null}
 
       <SubmitButton pendingLabel="שולח…">שליחת התשובות</SubmitButton>
     </form>

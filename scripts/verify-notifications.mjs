@@ -130,6 +130,20 @@ async function run() {
     (await a.page.locator("body").innerText()).includes("דנה לוי"),
   );
 
+  /*
+   * Finding C: notificationHref used to return /dashboard/notifications for
+   * an intake_submitted row - the list you are already on. The answers live
+   * on the client's card, so tapping the notification must go there instead.
+   */
+  const notifLink = a.page.getByRole("link", { name: /התקבלו תשובות לשאלון/ });
+  check("there is a link for the submitted questionnaire", (await notifLink.count()) === 1);
+  const notifHref = await notifLink.first().getAttribute("href").catch(() => null);
+  check(
+    "it links to the client, not back to the notifications list",
+    notifHref === `/dashboard/clients/${client.id}`,
+    notifHref ?? "absent",
+  );
+
   const { data: afterOpen } = await admin
     .from("notifications")
     .select("read_at")
