@@ -52,13 +52,17 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers: securityHeaders },
 
       /*
-       * The quote link is a bearer token in a URL. strict-origin-when-cross-
-       * origin would still send the full path to a same-origin destination, and
-       * any outbound navigation from this page must not carry the token in a
-       * Referer header at all.
+       * The quote link and the questionnaire link are both bearer tokens in a
+       * URL. strict-origin-when-cross-origin would still send the full path to
+       * a same-origin destination, and no outbound navigation from either page
+       * may carry the token in a Referer header.
        */
       {
         source: "/q/:public_token*",
+        headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+      },
+      {
+        source: "/f/:public_token*",
         headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
       },
     ];

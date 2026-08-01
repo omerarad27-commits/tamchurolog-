@@ -7,11 +7,14 @@ import { ButtonLink, buttonClasses } from "@/components/ui/button";
 import { requireBusiness } from "@/lib/auth";
 import { formatDate, formatILS } from "@/lib/format";
 import { formatPhoneForDisplay, normalizeIsraeliPhone } from "@/lib/phone";
+import { SITE_URL } from "@/lib/site";
 import type { Client, QuoteStatus } from "@/lib/types";
 import { buildWhatsAppChatUrl } from "@/lib/whatsapp";
 
 import { ClientForm } from "../client-form";
 import { DeleteClientButton } from "../delete-client-button";
+import { IntakeAnswersCard, type IntakeRequestRow } from "./intake-answers";
+import { SendIntake } from "./send-intake";
 
 export const metadata: Metadata = {
   title: "לקוח | תמחורולוג",
@@ -55,6 +58,30 @@ export default async function ClientPage({
     .order("issued_at", { ascending: false });
 
   const quotes = (quoteRows ?? []) as ClientQuote[];
+
+  const { data: formRows } = await supabase
+    .from("intake_forms")
+    .select("id, name")
+    .eq("business_id", business.id)
+    .order("created_at", { ascending: false });
+
+  /*
+   * The questions are read from the request row rather than the saved form:
+   * each request carries its own snapshot, so this shows what was actually
+   * asked even after the owner edited or deleted the saved questionnaire.
+   * Nothing on this screen is calculated from the answers - pricing stays
+   * manual, by design.
+   */
+  const { data: intakeRows } = await supabase
+    .from("intake_requests")
+    .select(
+      "id, form_name, questions, answers, sent_at, submitted_at, public_token",
+    )
+    .eq("client_id", client.id)
+    .eq("business_id", business.id)
+    .order("sent_at", { ascending: false });
+
+  const intakeRequests = (intakeRows ?? []) as IntakeRequestRow[];
 
   // One parse, used by both links. A number that will not normalise gets no
   // buttons at all rather than buttons that reach the wrong person.
@@ -164,6 +191,25 @@ export default async function ClientPage({
         )}
       </section>
 
+      {/* Only when something was sent. An empty-state box for a feature this owner
+          may never use would be noise on the page they open most. */}
+      {intakeRequests.length > 0 ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-semibold">שאלונים</h2>
+          <div className="grid gap-2 lg:grid-cols-2">
+            {intakeRequests.map((request) => (
+              <IntakeAnswersCard
+                key={request.id}
+                request={request}
+                businessName={business.name}
+                clientName={client.full_name}
+                clientPhone={client.phone}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {/*
         Editing is demoted rather than removed. It is the rarest thing done on
         this page and it used to occupy all of it.
@@ -172,6 +218,24 @@ export default async function ClientPage({
         keyboard accessible and announced by a screen reader for free, and this
         page is otherwise a server component.
       */}
+      {/* Collapsed by default for the same reason the edit form is: most visits to
+          this page are to read a quote, not to send a questionnaire. */}
+      <details className="rounded-card border border-border bg-surface">
+        <summary className="cursor-pointer px-5 py-4 font-semibold">
+          שליחת שאלון
+        </summary>
+        <div className="border-t border-border p-5">
+          <SendIntake
+            clientId={client.id}
+            clientName={client.full_name}
+            clientPhone={client.phone}
+            businessName={business.name}
+            siteUrl={SITE_URL}
+            forms={formRows ?? []}
+          />
+        </div>
+      </details>
+
       <details className="rounded-card border border-border bg-surface">
         <summary className="cursor-pointer px-5 py-4 font-semibold">
           עריכת פרטי הלקוח

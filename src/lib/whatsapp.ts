@@ -100,3 +100,24 @@ export function buildReminderMessage({
     businessName,
   ].join("\n");
 }
+
+export function buildIntakeMessage({
+  businessName,
+  clientName,
+  formUrl,
+}: {
+  businessName: string;
+  clientName: string;
+  formUrl: string;
+}): string {
+  const greeting = clientName ? `היי ${firstName(clientName)},` : "היי,";
+
+  return [
+    `${greeting} כאן ${businessName}.`,
+    "",
+    "כדי שאוכל להכין לך הצעת מחיר מדויקת, אשמח אם תענה על כמה שאלות קצרות:",
+    formUrl,
+    "",
+    "זה לוקח פחות מדקה.",
+  ].join("\n");
+}

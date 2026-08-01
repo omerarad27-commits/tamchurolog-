@@ -70,10 +70,12 @@ export function SkeletonList({
   rows = 4,
   action = false,
   filters = 0,
+  subtitle = false,
 }: {
   rows?: number;
   action?: boolean;
   filters?: number;
+  subtitle?: boolean;
 }) {
   return (
     <div
@@ -82,7 +84,7 @@ export function SkeletonList({
       aria-label="טוען"
       aria-live="polite"
     >
-      <SkeletonHeading action={action} />
+      <SkeletonHeading action={action} subtitle={subtitle} />
       {filters > 0 ? <SkeletonFilters count={filters} /> : null}
 
       {/* Same grid as the lists it stands in for, so the second column does not
