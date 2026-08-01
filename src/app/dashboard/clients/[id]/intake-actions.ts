@@ -1,7 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-
 import { requireBusiness } from "@/lib/auth";
 import {
   type IntakeSendState,
@@ -75,6 +73,21 @@ export async function createIntakeRequestAction(
     return { error: "יצירת הקישור נכשלה. נסה שוב.", token: null, formId: null };
   }
 
-  revalidatePath(`/dashboard/clients/${clientId}`);
+  /*
+   * Deliberately NO revalidatePath here, and this is not an oversight.
+   *
+   * It used to call revalidatePath on this client's page. That re-renders the
+   * route and ships a fresh RSC payload, which remounts this client component
+   * and wipes the useActionState value we are about to return -- the token the
+   * WhatsApp button is built from. Measured: with the call, the button failed
+   * to appear on 3 of 6 runs even though the row was created every time. The
+   * owner tapped "prepare a link", the row landed, and nothing happened on
+   * screen.
+   *
+   * The token is returned to the caller instead, which is immune to it. The
+   * request's own card on this page picks the row up on the next load, and
+   * that card carries its own WhatsApp link, so the link is never lost - it
+   * just is not painted twice during the same interaction.
+   */
   return { error: null, token: created.public_token, formId: form.id };
 }
