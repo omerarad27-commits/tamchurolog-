@@ -50,9 +50,14 @@ export default async function PublicIntakePage({
       <header>
         <p className="text-sm text-muted">{request.businessName}</p>
         <h1 className="mt-1 text-2xl font-bold">כמה שאלות לפני שמתמחרים</h1>
-        <p className="mt-2 text-sm text-muted">
-          התשובות עוזרות להכין לך הצעת מחיר מדויקת. זה לוקח פחות מדקה.
-        </p>
+        {/* The invitation is dropped once the answers are in. "It takes less
+            than a minute" above "you already answered" reads as a page that
+            does not know what happened on it. */}
+        {request.submittedAt ? null : (
+          <p className="mt-2 text-sm text-muted">
+            התשובות עוזרות להכין לך הצעת מחיר מדויקת. זה לוקח פחות מדקה.
+          </p>
+        )}
       </header>
 
       {/*

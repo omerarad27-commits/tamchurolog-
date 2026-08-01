@@ -201,8 +201,20 @@ async function run() {
   await page.goto(`${BASE}/dashboard/clients/${ids.withPhone}`, {
     waitUntil: "networkidle",
   });
-  const summary = page.locator("summary").first();
+  /*
+   * Targeted by its own label, not by position.
+   *
+   * This used to be locator("summary").first(), which worked only while the
+   * edit accordion was the sole <details> on the page. The send-a-questionnaire
+   * accordion now sits above it, so .first() opened the wrong one and the edit
+   * fields were never on screen. Position is not an identity.
+   */
+  const summary = page.getByText("עריכת פרטי הלקוח", { exact: true });
   check("the edit section is present and collapsed", (await summary.count()) === 1);
+  check(
+    "and it is genuinely closed until clicked",
+    !(await page.getByLabel("שם מלא").isVisible()),
+  );
   await summary.click();
   await page.getByLabel("שם מלא").fill("אורי אחרי עריכה");
   await page.getByRole("button", { name: "שמירת שינויים" }).click();
