@@ -39,7 +39,20 @@ function nextTextId(existing: { id: string }[]): string {
   return `text-${highest + 1}`;
 }
 
-export function FormBuilder({ draft }: { draft?: FormDraft }) {
+export function FormBuilder({
+  draft,
+  /**
+   * Where to go after a successful save, when that is not the form list.
+   *
+   * Set when the builder was opened from a client's page: the owner is in the
+   * middle of sending that client a questionnaire, and the form list is not
+   * where they were heading.
+   */
+  returnTo,
+}: {
+  draft?: FormDraft;
+  returnTo?: string;
+}) {
   const isEdit = Boolean(draft);
 
   const [state, formAction] = useActionState(
@@ -102,6 +115,9 @@ export function FormBuilder({ draft }: { draft?: FormDraft }) {
     <form action={formAction} className="flex w-full max-w-form flex-col gap-5" noValidate>
       <input type="hidden" name="questions" value={JSON.stringify(questions)} />
       {draft ? <input type="hidden" name="formId" value={draft.id} /> : null}
+      {returnTo ? (
+        <input type="hidden" name="returnTo" value={returnTo} />
+      ) : null}
 
       <section className="rounded-card border border-border bg-surface p-5 shadow-sm">
         <TextField

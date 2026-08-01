@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useId, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
-import { buttonClasses } from "@/components/ui/button";
+import { ButtonLink, buttonClasses } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { inputClasses } from "@/components/ui/text-field";
 import { EMPTY_INTAKE_SEND_STATE } from "@/lib/intake";
@@ -18,6 +19,7 @@ export function SendIntake({
   businessName,
   siteUrl,
   forms,
+  initialFormId,
 }: {
   clientId: string;
   clientName: string;
@@ -25,13 +27,36 @@ export function SendIntake({
   businessName: string;
   siteUrl: string;
   forms: { id: string; name: string }[];
+  /** A form just written from this page, to arrive back already chosen. */
+  initialFormId?: string | null;
 }) {
   const [state, formAction] = useActionState(
     createIntakeRequestAction,
     EMPTY_INTAKE_SEND_STATE,
   );
-  const [formId, setFormId] = useState(forms.length === 1 ? forms[0].id : "");
+  /*
+   * A form named in the URL wins over the single-form shortcut: the owner has
+   * just written it, and it is the one they meant. Checked against the list so
+   * a hand-typed id cannot leave the select on a value it does not offer.
+   */
+  const [formId, setFormId] = useState(() => {
+    if (initialFormId && forms.some((form) => form.id === initialFormId)) {
+      return initialFormId;
+    }
+    return forms.length === 1 ? forms[0].id : "";
+  });
   const selectId = useId();
+
+  /*
+   * Writing a new questionnaire goes to the real builder rather than a second
+   * copy of it inlined here. A questionnaire is a name and any number of
+   * questions, and a shrunken version on this page would be a second thing to
+   * keep in step with the first. The round trip returns here with the new form
+   * chosen, so it costs the owner a screen and no lost place.
+   */
+  const newFormHref = `/dashboard/forms/new?returnTo=${encodeURIComponent(
+    `/dashboard/clients/${clientId}`,
+  )}`;
 
   /*
    * Two taps, not one, and this is deliberate.
@@ -63,9 +88,14 @@ export function SendIntake({
 
   if (forms.length === 0) {
     return (
-      <p className="text-sm text-muted">
-        עדיין לא יצרת שאלון. אפשר ליצור אחד במסך השאלונים.
-      </p>
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-muted">
+          עדיין לא יצרת שאלון. אפשר ליצור אחד עכשיו ולחזור לכאן לשליחה.
+        </p>
+        <ButtonLink href={newFormHref} variant="secondary" size="sm">
+          יצירת שאלון חדש
+        </ButtonLink>
+      </div>
     );
   }
 
@@ -74,9 +104,21 @@ export function SendIntake({
       <form action={formAction} className="flex flex-col gap-3">
         <input type="hidden" name="clientId" value={clientId} />
         <div className="flex flex-col gap-1.5">
-          <label htmlFor={selectId} className="text-sm font-medium">
-            איזה שאלון לשלוח?
-          </label>
+          <div className="flex items-baseline justify-between gap-3">
+            <label htmlFor={selectId} className="text-sm font-medium">
+              איזה שאלון לשלוח?
+            </label>
+            {/*
+              A link, not an option inside the select: choosing from a dropdown
+              should never navigate away, and this leaves the page.
+            */}
+            <Link
+              href={newFormHref}
+              className="shrink-0 text-sm font-semibold text-brand hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            >
+              + שאלון חדש
+            </Link>
+          </div>
           <select
             id={selectId}
             name="formId"

@@ -32,8 +32,17 @@ type ClientQuote = {
 
 export default async function ClientPage({
   params,
+  searchParams,
 }: PageProps<"/dashboard/clients/[id]">) {
   const { id } = await params;
+
+  /*
+   * Set when the owner has just written a questionnaire from this page. It
+   * opens the send section and picks the new form, so they land back where
+   * they left off rather than one step behind it.
+   */
+  const { intakeForm } = await searchParams;
+  const justCreatedFormId = typeof intakeForm === "string" ? intakeForm : null;
   const { supabase, business } = await requireBusiness();
 
   const { data } = await supabase
@@ -220,8 +229,12 @@ export default async function ClientPage({
         page is otherwise a server component.
       */}
       {/* Collapsed by default for the same reason the edit form is: most visits to
-          this page are to read a quote, not to send a questionnaire. */}
-      <details className="rounded-card border border-border bg-surface">
+          this page are to read a quote, not to send a questionnaire. Open when
+          the owner has just come back from writing one. */}
+      <details
+        open={Boolean(justCreatedFormId)}
+        className="rounded-card border border-border bg-surface"
+      >
         <summary className="cursor-pointer px-5 py-4 font-semibold">
           שליחת שאלון
         </summary>
@@ -233,6 +246,7 @@ export default async function ClientPage({
             businessName={business.name}
             siteUrl={SITE_URL}
             forms={formRows ?? []}
+            initialFormId={justCreatedFormId}
           />
         </div>
       </details>

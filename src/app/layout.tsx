@@ -71,6 +71,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="he"
       dir="rtl"
+      /*
+       * The accessibility script writes data-a11y-* onto this element before
+       * hydration, so the server's <html> and the browser's deliberately
+       * differ. Without this, React reconciles the difference away and the
+       * stored settings vanish the moment the page becomes interactive —
+       * which is what happened: the value was in localStorage and the
+       * attribute was gone.
+       */
+      suppressHydrationWarning
       className={`${rubik.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">

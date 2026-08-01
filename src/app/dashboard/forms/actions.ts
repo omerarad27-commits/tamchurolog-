@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireBusiness } from "@/lib/auth";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 import {
   MAX_FORM_NAME_LENGTH,
   parseQuestions,
@@ -51,15 +52,39 @@ export async function createFormAction(
   const parsed = readForm(formData);
   if ("error" in parsed) return { error: parsed.error, success: null };
 
-  const { error } = await supabase.from("intake_forms").insert({
-    business_id: business.id,
-    name: parsed.name,
-    questions: parsed.questions,
-  });
+  const { data: created, error } = await supabase
+    .from("intake_forms")
+    .insert({
+      business_id: business.id,
+      name: parsed.name,
+      questions: parsed.questions,
+    })
+    .select("id")
+    .single();
 
-  if (error) return { error: "שמירת השאלון נכשלה. נסה שוב.", success: null };
+  if (error || !created) {
+    return { error: "שמירת השאלון נכשלה. נסה שוב.", success: null };
+  }
 
   revalidatePath("/dashboard/forms");
+
+  /*
+   * Normally the owner came from the form list and goes back to it. When they
+   * came from a client's page to write a questionnaire for that client, they
+   * are returned there instead, with the new form named in the URL so it is
+   * already chosen when they arrive — otherwise the trip ends one screen away
+   * from the thing they set out to do.
+   *
+   * The path is narrowed by the same rule the sign-in redirect uses, so a
+   * crafted ?returnTo cannot send anyone off site.
+   */
+  const returnToRaw = formData.get("returnTo");
+  if (typeof returnToRaw === "string" && returnToRaw) {
+    const path = safeRedirectPath(returnToRaw);
+    revalidatePath(path);
+    redirect(`${path}?intakeForm=${created.id}`);
+  }
+
   redirect("/dashboard/forms");
 }
 

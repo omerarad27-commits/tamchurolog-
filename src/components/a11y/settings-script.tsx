@@ -1,3 +1,5 @@
+import { headers } from "next/headers";
+
 import { A11Y_STORAGE_KEY } from "@/lib/a11y";
 
 /*
@@ -15,6 +17,17 @@ const SCRIPT = `try{var s=JSON.parse(localStorage.getItem(${JSON.stringify(
   A11Y_STORAGE_KEY,
 )})||"{}"),d=document.documentElement;for(var k in s){var v=s[k];if(v&&v!=="normal")d.setAttribute("data-a11y-"+k,v===true?"on":String(v))}}catch(e){}`;
 
-export function A11ySettingsScript() {
-  return <script dangerouslySetInnerHTML={{ __html: SCRIPT }} />;
+/*
+ * The nonce is not optional here. The app serves a
+ * `script-src 'self' 'nonce-…' 'strict-dynamic'` policy, which is exactly the
+ * policy that exists to stop an inline script the server did not author — and
+ * it stopped this one. The symptom was quiet: the setting was in localStorage,
+ * the attribute was never on <html>, and nothing failed out loud.
+ *
+ * proxy.ts mints the nonce per request and passes it through as x-nonce.
+ */
+export async function A11ySettingsScript() {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
+  return <script nonce={nonce} dangerouslySetInnerHTML={{ __html: SCRIPT }} />;
 }

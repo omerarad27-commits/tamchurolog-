@@ -124,12 +124,53 @@ async function run() {
   await page.goto(`${BASE}/q/${publicToken}`, { waitUntil: "networkidle" });
   const footer = page.locator("footer");
   check("the quote page has a footer landmark", (await footer.count()) === 1);
-  const footerLink = footer.getByRole("link");
+  /* Two links now, so each is asserted by name. The footer carried only the
+     home link until the accessibility statement had to be reachable from the
+     document itself and not just from the floating menu. */
+  const footerHrefs = await footer.getByRole("link").evaluateAll((links) =>
+    links.map((link) => link.getAttribute("href")),
+  );
   check(
     "the footer links home",
-    (await footerLink.count()) === 1 &&
-      (await footerLink.getAttribute("href")) === "/",
-    (await footerLink.getAttribute("href")) ?? "none",
+    footerHrefs.includes("/"),
+    footerHrefs.join(", ") || "none",
+  );
+  check(
+    "the footer links to the accessibility statement",
+    footerHrefs.includes("/accessibility"),
+    footerHrefs.join(", ") || "none",
+  );
+
+  /* ------------------------------------------ accessibility menu button */
+  const a11yButton = page.getByRole("button", { name: "פתיחת תפריט נגישות" });
+  check("the accessibility menu button is on the quote page", (await a11yButton.count()) === 1);
+
+  await a11yButton.click();
+  const dialog = page.locator("dialog[open]");
+  check("it opens a modal dialog", (await dialog.count()) === 1);
+
+  /* The point of a native <dialog>: Escape closes it and focus comes back. */
+  await page.keyboard.press("Escape");
+  check("Escape closes it", (await page.locator("dialog[open]").count()) === 0);
+  check(
+    "focus returns to the button that opened it",
+    await page.evaluate(
+      () => document.activeElement?.getAttribute("aria-label") === "פתיחת תפריט נגישות",
+    ),
+  );
+
+  /* High contrast has to reach the page, not just the menu's own state. */
+  await a11yButton.click();
+  await page.getByText("ניגודיות גבוהה", { exact: true }).click();
+  check(
+    "choosing high contrast marks the document",
+    (await page.locator("html[data-a11y-contrast=\"high\"]").count()) === 1,
+  );
+  await page.keyboard.press("Escape");
+  await page.reload({ waitUntil: "networkidle" });
+  check(
+    "the choice survives a reload",
+    (await page.locator("html[data-a11y-contrast=\"high\"]").count()) === 1,
   );
 
   /* ------------------------------------------------------- theme-color */
