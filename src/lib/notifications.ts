@@ -28,14 +28,23 @@ const COLUMNS =
 export function notificationText(notification: Notification): string {
   const who = notification.subject_name?.trim() || "לקוח";
 
+  /*
+   * Phrased so the verb never agrees with the client's gender.
+   *
+   * "דנה לוי מילא את השאלון" was the first draft, and it is wrong for roughly
+   * half of every client list: Hebrew verbs are gendered and a name does not
+   * tell us which form to use. Guessing from the name is worse than not
+   * guessing. Passive and prepositional forms sidestep it entirely, and read
+   * no less naturally.
+   */
   if (notification.kind === "quote_approved") {
     const number = notification.quote_number;
     return number === null
-      ? `${who} אישר את ההצעה`
-      : `${who} אישר את הצעה מספר ${number}`;
+      ? `ההצעה אושרה על ידי ${who}`
+      : `הצעה מספר ${number} אושרה על ידי ${who}`;
   }
 
-  return `${who} מילא את השאלון`;
+  return `התקבלו תשובות לשאלון מ${who}`;
 }
 
 /** Where tapping it goes. Falls back to the list when the target is gone. */
