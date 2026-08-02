@@ -3,7 +3,10 @@ import "server-only";
 import { requireBusiness } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export type NotificationKind = "intake_submitted" | "quote_approved";
+export type NotificationKind =
+  | "intake_submitted"
+  | "quote_approved"
+  | "quote_declined";
 
 export type Notification = {
   id: string;
@@ -54,11 +57,19 @@ export function notificationText(notification: Notification): string {
    * guessing. Passive and prepositional forms sidestep it entirely, and read
    * no less naturally.
    */
-  if (notification.kind === "quote_approved") {
+  if (
+    notification.kind === "quote_approved" ||
+    notification.kind === "quote_declined"
+  ) {
+    /*
+     * The verb agrees with "הצעה", which is feminine and always will be, so
+     * this stays gender-safe for the same reason the approval wording does.
+     */
+    const verb = notification.kind === "quote_approved" ? "אושרה" : "נדחתה";
     const number = notification.quote_number;
     return number === null
-      ? `ההצעה אושרה על ידי ${who}`
-      : `הצעה מספר ${number} אושרה על ידי ${who}`;
+      ? `ההצעה ${verb} על ידי ${who}`
+      : `הצעה מספר ${number} ${verb} על ידי ${who}`;
   }
 
   return `התקבלו תשובות לשאלון מ${who}`;
@@ -66,7 +77,11 @@ export function notificationText(notification: Notification): string {
 
 /** Where tapping it goes. Falls back to the list when the target is gone. */
 export function notificationHref(notification: NotificationWithClient): string {
-  if (notification.kind === "quote_approved" && notification.quote_id) {
+  if (
+    (notification.kind === "quote_approved" ||
+      notification.kind === "quote_declined") &&
+    notification.quote_id
+  ) {
     return `/dashboard/quotes/${notification.quote_id}`;
   }
   if (notification.kind === "intake_submitted" && notification.clientId) {

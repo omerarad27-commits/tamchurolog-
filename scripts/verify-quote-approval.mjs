@@ -160,21 +160,36 @@ async function run() {
     .single();
   check("the guarded quote is still open", untouched.status === "sent");
 
-  /* ------------- the notification, once 0016 has been applied ------------- */
+  /* ------------- the notification, once 0021 has been applied -------------
+   *
+   * 0016 raised one for an approval only, and 0021 raised one for a decline as
+   * well, because an owner who sees some decisions in the bell and not others
+   * cannot trust any of them. Both outcomes are asserted here.
+   */
   const { data: notes } = await admin
     .from("notifications")
     .select("kind, subject_name, quote_number, quote_id")
     .eq("business_id", biz.id);
 
   if (process.env.EXPECT_NOTIFICATION === "1") {
-    check("approving raised exactly one notification", notes.length === 1, String(notes.length));
-    check("it is a quote_approved", notes[0]?.kind === "quote_approved");
-    check("it snapshotted the client's name", notes[0]?.subject_name === "דנה לוי");
-    check("it snapshotted the quote number", notes[0]?.quote_number === q1.quote_number);
-    check("it points at the quote", notes[0]?.quote_id === q1.id);
-    check("declining raised nothing", notes.length === 1);
+    check("the two decisions raised two notifications", notes.length === 2, String(notes.length));
+
+    const approved = notes.find((n) => n.quote_id === q1.id);
+    check("the approval raised one", Boolean(approved));
+    check("it is a quote_approved", approved?.kind === "quote_approved");
+    check("it snapshotted the client's name", approved?.subject_name === "דנה לוי");
+    check("it snapshotted the quote number", approved?.quote_number === q1.quote_number);
+
+    const declined2 = notes.find((n) => n.quote_id === q2.id);
+    check("the decline raised one too", Boolean(declined2));
+    check("it is a quote_declined", declined2?.kind === "quote_declined");
+    check("it snapshotted the client's name", declined2?.subject_name === "דנה לוי");
+    check("it snapshotted the quote number", declined2?.quote_number === q2.quote_number);
+
+    /* The refused replay on q1 must not have added a third. */
+    check("a refused second decision raised nothing", notes.length === 2);
   } else {
-    console.log("  [skip] notification checks (set EXPECT_NOTIFICATION=1 after 0016)");
+    console.log("  [skip] notification checks (set EXPECT_NOTIFICATION=1 after 0021)");
   }
 }
 
