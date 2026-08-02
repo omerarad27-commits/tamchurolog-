@@ -203,6 +203,21 @@ async function run() {
     { path: "/dashboard/notifications", expect: "התראות", name: "notifications" },
   ];
 
+  /*
+   * Warm the origin before anything is judged.
+   *
+   * The app serves upgrade-insecure-requests, and against a plain-http server
+   * on localhost Chrome tries https once per origin, fails, and falls back to
+   * http for the rest of the session. The page renders correctly either way,
+   * but that one failure reaches the console -- and it lands on whichever
+   * screen happens to be visited first, which made this suite fail on an
+   * innocent screen whenever anything shifted the order or the timing.
+   *
+   * Spending the attempt here makes the loop deterministic without teaching it
+   * to ignore SSL errors, which is a thing it should keep failing on.
+   */
+  await page.goto(`${BASE}/dashboard`, { waitUntil: "networkidle" });
+
   for (const screen of screens) {
     consoleErrors.length = 0;
     await page.goto(`${BASE}${screen.path}`, { waitUntil: "networkidle" });

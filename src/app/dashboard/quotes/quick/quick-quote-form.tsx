@@ -3,10 +3,11 @@
 import { useActionState, useId, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { inputClasses, TextField } from "@/components/ui/text-field";
-import { formatILS } from "@/lib/format";
-import type { Client } from "@/lib/types";
+import { formatILS, formatQuantity } from "@/lib/format";
+import type { Client, PriceListItem } from "@/lib/types";
 import { EMPTY_FORM_STATE } from "@/lib/validation";
 import { formatVatRate, splitVat, vatFieldsFor, VAT_RATE, type VatMode } from "@/lib/vat";
 
@@ -53,9 +54,12 @@ const VAT_CHOICES: { mode: VatMode; label: string; hint: string }[] = [
  */
 export function QuickQuoteForm({
   clients,
+  priceList,
   defaultVatMode,
 }: {
   clients: Client[];
+  /** The owner's saved items. Empty is normal: the picker simply does not appear. */
+  priceList: PriceListItem[];
   /** What the business type implies, as the starting choice rather than the answer. */
   defaultVatMode: VatMode;
 }) {
@@ -71,8 +75,24 @@ export function QuickQuoteForm({
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [vatMode, setVatMode] = useState<VatMode>(defaultVatMode);
+  /** True while the price list panel is open under the amount. */
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const clientSelectId = useId();
+
+  /*
+   * A saved item answers both questions this screen asks about the work, so it
+   * fills both: a quick quote is one job at one price, and leaving half of it
+   * for the owner to copy across by hand would defeat the point of picking.
+   *
+   * Copied by value. Editing the amount afterwards is a decision about this
+   * quote and must never travel back to the price list.
+   */
+  const pickFromPriceList = (item: PriceListItem) => {
+    setTitle(item.name);
+    setAmount(formatQuantity(Number(item.unit_price)));
+    setPickerOpen(false);
+  };
 
   /*
    * The breakdown, live under the field.
@@ -174,6 +194,41 @@ export function QuickQuoteForm({
           className="numeric text-start"
           placeholder="0"
         />
+
+        {priceList.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => setPickerOpen((open) => !open)}
+              aria-expanded={pickerOpen}
+            >
+              {pickerOpen ? "סגירת המחירון" : "בחירה מהמחירון"}
+            </Button>
+
+            {pickerOpen ? (
+              <ul className="flex max-h-64 flex-col gap-1.5 overflow-y-auto rounded-card border border-border p-2">
+                {priceList.map((item) => (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => pickFromPriceList(item)}
+                      className="flex w-full items-center gap-3 rounded-tile px-3 py-2.5 text-start transition-colors hover:bg-background focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                    >
+                      <span className="min-w-0 flex-1 truncate font-medium">
+                        {item.name}
+                      </span>
+                      <span className="numeric shrink-0 text-sm text-muted">
+                        {formatILS(Number(item.unit_price))}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
 
         <fieldset className="flex flex-col gap-1.5">
           <legend className="mb-1.5 text-sm font-medium">הסכום שהזנתי הוא</legend>

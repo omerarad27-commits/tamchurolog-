@@ -24,7 +24,8 @@ const TABS = [
   { href: "/dashboard/pricelist", label: "מחירון" },
   { href: "/dashboard/forms", label: "שאלונים" },
   { href: "/dashboard/stats", label: "סיכום" },
-  { href: "/dashboard/settings", label: "הגדרות" },
+  /* Settings is not here on purpose: it lives in the header next to the
+     business name, where the thing it configures already is. */
 ] as const;
 
 export function DashboardNav() {

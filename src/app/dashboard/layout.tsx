@@ -5,6 +5,7 @@ import { requireBusiness } from "@/lib/auth";
 
 import { DashboardNav } from "./nav";
 import { NotificationBell } from "./notification-bell";
+import { SettingsLink } from "./settings-link";
 import { SignOutButton } from "./sign-out-button";
 
 export default async function DashboardLayout({
@@ -44,6 +45,9 @@ export default async function DashboardLayout({
             <p className="truncate text-xs text-muted">{user.email}</p>
           </div>
 
+          {/* Settings sits with the identity it describes, rather than taking
+              a sixth of the bottom bar from the screens used all day. */}
+          <SettingsLink />
           <NotificationBell businessId={business.id} />
           <SignOutButton />
         </div>

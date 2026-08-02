@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { requireBusiness } from "@/lib/auth";
 import { defaultChargesVat, toBusinessType } from "@/lib/business-type";
-import type { Client } from "@/lib/types";
+import type { Client, PriceListItem } from "@/lib/types";
 import type { VatMode } from "@/lib/vat";
 
 import { QuickQuoteForm } from "./quick-quote-form";
@@ -14,13 +14,24 @@ export const metadata: Metadata = {
 export default async function QuickQuotePage() {
   const { supabase, business } = await requireBusiness();
 
-  const { data } = await supabase
-    .from("clients")
-    .select("id, business_id, full_name, phone, email, notes, created_at")
-    .eq("business_id", business.id)
-    .order("full_name", { ascending: true });
+  /* Both lists in one round trip: this screen exists to be fast, and two
+     awaits in sequence would spend a second trip on it for nothing. */
+  const [{ data: clientRows }, { data: priceRows }] = await Promise.all([
+    supabase
+      .from("clients")
+      .select("id, business_id, full_name, phone, email, notes, created_at")
+      .eq("business_id", business.id)
+      .order("full_name", { ascending: true }),
+    supabase
+      .from("price_list_items")
+      .select("id, business_id, name, unit_price, sort_order, created_at")
+      .eq("business_id", business.id)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true }),
+  ]);
 
-  const clients = (data ?? []) as Client[];
+  const clients = (clientRows ?? []) as Client[];
+  const priceList = (priceRows ?? []) as PriceListItem[];
 
   /*
    * The business type picks where the toggle starts, and nothing more. It used
@@ -45,7 +56,11 @@ export default async function QuickQuotePage() {
         </p>
       </div>
 
-      <QuickQuoteForm clients={clients} defaultVatMode={defaultVatMode} />
+      <QuickQuoteForm
+        clients={clients}
+        priceList={priceList}
+        defaultVatMode={defaultVatMode}
+      />
     </div>
   );
 }
