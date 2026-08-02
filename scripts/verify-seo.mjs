@@ -41,7 +41,19 @@ check("sitemap.xml responds 200", sitemap.status === 200, String(sitemap.status)
 check("it is XML", sitemap.type.includes("xml"), sitemap.type);
 const sitemapBody = await sitemap.res.text();
 const locs = [...sitemapBody.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
-check("it lists exactly one URL", locs.length === 1, locs.join(" "));
+/*
+ * The landing page and the accessibility statement, and nothing else. The
+ * count is asserted as well as the contents: the point of this check has never
+ * been the number, it is that no third thing quietly joins a published list
+ * that must never learn to enumerate quotes.
+ */
+check(
+  "it lists the landing page and the statement, and nothing else",
+  locs.length === 2 &&
+    locs.some((loc) => /\/accessibility$/.test(loc)) &&
+    locs.some((loc) => !/\/accessibility$/.test(loc)),
+  locs.join(" "),
+);
 check("no /q token is published", !sitemapBody.includes("/q/"));
 check(
   "the URL is absolute and not a preview host",
