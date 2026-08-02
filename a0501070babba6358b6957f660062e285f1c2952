@@ -1,0 +1,14 @@
+Message correction (added later, without rewriting history).
+
+This commit's message describes only the VAT change on the quick quote
+screen. It actually carries a much larger body of work that was sitting
+uncommitted in the tree and got swept in by a git add -A: the price list
+(migration 0019), the quick quote screen, quote printing and Save-as-PDF
+with components/quote-document, dismissable dashboard tips (migration
+0020), unsent quotes made private (migration 0018), searchable client
+and quote lists, and the verify-migrations and verify-screens scripts.
+
+It was left as one commit on purpose. The VAT change and the swept-in
+work are entangled in five files, and the earlier state of those files
+was never committed anywhere, so a split would mean reconstructing it by
+hand and landing an intermediate commit that does not typecheck.
