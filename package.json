@@ -9,6 +9,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "verify:rls": "node --env-file=.env.local scripts/verify-rls.mjs",
+    "verify:migrations": "node --env-file=.env.local scripts/verify-migrations.mjs",
+    "verify:screens": "node --env-file=.env.local scripts/verify-screens.mjs",
     "verify:public": "node --env-file=.env.local scripts/verify-public-quote.mjs",
     "seed:demo": "node --env-file=.env.local scripts/seed-demo-quotes.mjs",
     "accounts": "node --env-file=.env.local scripts/list-accounts.mjs",

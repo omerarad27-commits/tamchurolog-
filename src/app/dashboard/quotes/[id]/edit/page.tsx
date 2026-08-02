@@ -4,7 +4,13 @@ import { notFound, redirect } from "next/navigation";
 import { requireBusiness } from "@/lib/auth";
 import { defaultChargesVat, toBusinessType } from "@/lib/business-type";
 import { formatQuantity } from "@/lib/format";
-import { isQuoteEditable, type Client, type Quote, type QuoteLineItem } from "@/lib/types";
+import {
+  isQuoteEditable,
+  type Client,
+  type PriceListItem,
+  type Quote,
+  type QuoteLineItem,
+} from "@/lib/types";
 
 import { QuoteBuilder, type QuoteDraft } from "../../quote-builder";
 
@@ -35,21 +41,29 @@ export default async function EditQuotePage({
     redirect(`/dashboard/quotes/${quote.id}`);
   }
 
-  const [{ data: clientRows }, { data: itemRows }] = await Promise.all([
-    supabase
-      .from("clients")
-      .select("id, business_id, full_name, phone, email, notes, created_at")
-      .eq("business_id", business.id)
-      .order("full_name", { ascending: true }),
-    supabase
-      .from("quote_line_items")
-      .select("id, quote_id, description, quantity, unit_price, line_total, sort_order")
-      .eq("quote_id", quote.id)
-      .order("sort_order", { ascending: true }),
-  ]);
+  const [{ data: clientRows }, { data: itemRows }, { data: priceRows }] =
+    await Promise.all([
+      supabase
+        .from("clients")
+        .select("id, business_id, full_name, phone, email, notes, created_at")
+        .eq("business_id", business.id)
+        .order("full_name", { ascending: true }),
+      supabase
+        .from("quote_line_items")
+        .select("id, quote_id, description, quantity, unit_price, line_total, sort_order")
+        .eq("quote_id", quote.id)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("price_list_items")
+        .select("id, business_id, name, unit_price, sort_order, created_at")
+        .eq("business_id", business.id)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true }),
+    ]);
 
   const clients = (clientRows ?? []) as Client[];
   const items = (itemRows ?? []) as QuoteLineItem[];
+  const priceList = (priceRows ?? []) as PriceListItem[];
 
   const draft: QuoteDraft = {
     id: quote.id,
@@ -60,6 +74,9 @@ export default async function EditQuotePage({
     withVat: Number(quote.vat_rate) > 0,
     pricesIncludeVat: quote.prices_include_vat,
     wasSent: Boolean(quote.sent_at) || quote.status !== "draft",
+    /* A quote with no line items was written as a single figure, and that
+       figure is the raw amount in lines_total. */
+    flatAmount: items.length === 0 ? formatQuantity(Number(quote.lines_total)) : "",
     lines: items.map((item) => ({
       description: item.description,
       quantity: formatQuantity(Number(item.quantity)),
@@ -77,6 +94,7 @@ export default async function EditQuotePage({
 
       <QuoteBuilder
         clients={clients}
+        priceList={priceList}
         draft={draft}
         defaultValidUntil={draft.validUntil}
         defaultNotes={draft.notes}

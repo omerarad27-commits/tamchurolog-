@@ -10,11 +10,22 @@ import {
   needsFollowUp,
   quietForLabel,
 } from "@/lib/follow-up";
-import { formatDate, formatILS } from "@/lib/format";
+import { formatILS } from "@/lib/format";
 import type { QuoteWithClient } from "@/lib/types";
 import { buildReminderMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 
+import {
+  pickTip,
+  PRICE_LIST_TIP_AFTER_QUOTES,
+  SEARCH_TIP_AFTER_QUOTES,
+  type TipId,
+} from "@/lib/tips";
+
+import { toQuoteListRow } from "@/lib/quote-list-row";
+
+import { QuoteList } from "./quote-list";
 import { SendReminder } from "./send-reminder";
+import { Tip } from "./tip";
 
 export const metadata: Metadata = {
   title: "הצעות מחיר | תמחורולוג",
@@ -66,13 +77,50 @@ export default async function DashboardPage({
   const coldQuotes = quotes.filter(needsFollowUp);
   const visibleQuotes = quotes.filter((q) => matchesFilter(q, activeFilter));
 
+  /*
+   * The one tip this screen may show, if any.
+   *
+   * Both conditions are about what the owner has actually done. The price list
+   * is suggested only once there are enough quotes for the retyping to have
+   * become noticeable, and only while the list is still empty — suggesting it to
+   * someone who already built one would be the app not paying attention.
+   *
+   * Order is the priority when both hold: building a price list saves minutes
+   * on every future quote, finding an old one saves seconds today.
+   */
+  const { count: priceListCount } = await supabase
+    .from("price_list_items")
+    .select("id", { count: "exact", head: true })
+    .eq("business_id", business.id);
+
+  const candidates: TipId[] = [];
+  if (
+    quotes.length >= PRICE_LIST_TIP_AFTER_QUOTES &&
+    (priceListCount ?? 0) === 0
+  ) {
+    candidates.push("price_list");
+  }
+  if (quotes.length >= SEARCH_TIP_AFTER_QUOTES) candidates.push("search");
+
+  const tip = pickTip(candidates, business.dismissed_tips);
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-3">
         <h1>הצעות מחיר</h1>
-        <ButtonLink href="/dashboard/quotes/new" size="sm">
-          הצעה חדשה
-        </ButtonLink>
+        {/*
+          Two ways in, and the quick one is the primary because it is the one
+          that fits the job most of these quotes are for. The full builder is
+          still one tap away and keeps its own screen; nothing about it changed.
+        */}
+        <div className="flex shrink-0 gap-2">
+          <ButtonLink href="/dashboard/quotes/new" size="sm" variant="secondary">
+            טופס מלא
+          </ButtonLink>
+          <ButtonLink href="/dashboard/quotes/quick" size="sm">
+            הצעה מהירה
+          </ButtonLink>
+        </div>
       </div>
 
       {error ? (
@@ -142,7 +190,9 @@ export default async function DashboardPage({
           <p className="mt-1 text-sm text-muted">
             בנה הצעה, שלח אותה בוואטסאפ, ותדע בדיוק מתי הלקוח פתח אותה.
           </p>
-          <ButtonLink href="/dashboard/quotes/new" className="mt-4">
+          {/* The quick route, not the full form: the first quote should be the
+              one that proves the app works, not the one that teaches it. */}
+          <ButtonLink href="/dashboard/quotes/quick" className="mt-4">
             יצירת ההצעה הראשונה
           </ButtonLink>
         </div>
@@ -173,50 +223,29 @@ export default async function DashboardPage({
             })}
           </nav>
 
-          {visibleQuotes.length === 0 ? (
-            <p className="rounded-card border border-dashed border-border p-6 text-center text-sm text-muted">
-              אין הצעות בסטטוס הזה.
-            </p>
-          ) : (
-            /* One column on a phone, two once the shell is wide enough that a
-               single row would be a name at one edge and a price at the other
-               with 700px of nothing between them. */
-            <ul className="grid gap-2 lg:grid-cols-2">
-              {visibleQuotes.map((quote) => (
-                <li key={quote.id}>
-                  <Link
-                    href={`/dashboard/quotes/${quote.id}`}
-                    className="flex items-center gap-3 rounded-card border border-border bg-surface p-4 transition-colors hover:bg-background"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="truncate font-semibold">
-                          {quote.clients?.full_name ?? "לקוח שנמחק"}
-                        </p>
-                        <StatusBadge status={quote.status} />
-                      </div>
-                      {/* The subject, where there is one: on this list the
-                          client's name is the heading, and three quotes for
-                          the same client used to differ only by number. */}
-                      {quote.title ? (
-                        <p className="mt-0.5 truncate text-sm">{quote.title}</p>
-                      ) : null}
-                      <p className="mt-0.5 text-sm text-muted">
-                        הצעה <span className="numeric">#{quote.quote_number}</span>{" "}
-                        ·{" "}
-                        <span className="numeric">
-                          {formatDate(quote.sent_at ?? quote.issued_at)}
-                        </span>
-                      </p>
-                    </div>
-                    <span className="numeric shrink-0 font-bold">
-                      {formatILS(Number(quote.total))}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
+          {/* Above the list and below the filters, which is where the eye lands
+              on the way to the thing the tip is about. */}
+          {tip === "price_list" ? (
+            <Tip
+              id="price_list"
+              action={{ href: "/dashboard/pricelist", label: "בניית מחירון" }}
+            >
+              שמת לב שאתה מקליד את אותם דברים? אפשר לבנות מחירון קבוע ולבחור ממנו
+              בלחיצה.
+            </Tip>
+          ) : null}
+
+          {tip === "search" ? (
+            <Tip id="search">
+              עכשיו אפשר לחפש הצעה לפי שם לקוח, נושא או מספר — בשדה החיפוש שמעל
+              הרשימה.
+            </Tip>
+          ) : null}
+
+          <QuoteList
+            rows={visibleQuotes.map(toQuoteListRow)}
+            totalCount={quotes.length}
+          />
         </>
       )}
     </div>

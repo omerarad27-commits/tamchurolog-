@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { forwardRef, useTransition } from "react";
 
 import { buttonClasses } from "@/components/ui/button";
 
@@ -15,27 +15,32 @@ import { buttonClasses } from "@/components/ui/button";
  *
  * Shared by the initial send and the Phase 7 reminder; only the label, the
  * message text and the onShare callback differ.
+ *
+ * The anchor is exposed through a ref so the quick-quote route can click it on
+ * arrival. That is the one caller that cannot open WhatsApp inside the original
+ * gesture, because the quote it links to did not exist yet when the tap
+ * happened.
  */
-export function WhatsAppShareButton({
-  url,
-  label,
-  pendingLabel,
-  hasRecipient,
-  variant = "primary",
-  onShare,
-}: {
-  url: string;
-  label: string;
-  pendingLabel: string;
-  hasRecipient: boolean;
-  variant?: "primary" | "secondary";
-  onShare?: () => Promise<void>;
-}) {
+export const WhatsAppShareButton = forwardRef<
+  HTMLAnchorElement,
+  {
+    url: string;
+    label: string;
+    pendingLabel: string;
+    hasRecipient: boolean;
+    variant?: "primary" | "secondary";
+    onShare?: () => Promise<void>;
+  }
+>(function WhatsAppShareButton(
+  { url, label, pendingLabel, hasRecipient, variant = "primary", onShare },
+  ref,
+) {
   const [pending, startTransition] = useTransition();
 
   return (
     <div className="flex flex-col gap-1.5">
       <a
+        ref={ref}
         href={url}
         target="_blank"
         rel="noopener noreferrer"
@@ -55,4 +60,4 @@ export function WhatsAppShareButton({
       ) : null}
     </div>
   );
-}
+});

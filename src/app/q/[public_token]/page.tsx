@@ -1,19 +1,23 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
 
+import {
+  QuoteDocument,
+  quoteFileName,
+  type QuoteDocumentData,
+} from "@/components/quote-document";
+import { SavePdfButton } from "@/components/save-pdf-button";
 import { clientIpFromHeaders, isLinkPreviewBot } from "@/lib/bots";
-import { formatDate, formatDateTime, formatILS, formatQuantity } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 import { normalizeIsraeliPhone } from "@/lib/phone";
 import {
   isRevokedToken,
   loadPublicQuote,
   recordQuoteView,
 } from "@/lib/public-quote";
-import { formatVatRate } from "@/lib/vat";
 
 import { QuoteDecision } from "./quote-decision";
 import { RevokedQuote } from "./revoked";
@@ -99,13 +103,34 @@ export default async function PublicQuotePage({
 
   // Once a client has decided, the buttons are gone for good. The final state
   // is shown instead, so a revisit cannot un-approve anything.
-  const isOpen =
-    quote.status === "draft" ||
-    quote.status === "sent" ||
-    quote.status === "viewed";
+  //
+  // "draft" is absent deliberately, and not only because loadPublicQuote no
+  // longer returns one: this list is the answer to "may this person approve",
+  // and an unsent quote is not something to approve.
+  const isOpen = quote.status === "sent" || quote.status === "viewed";
 
-  const vatRate = Number(quote.vatRate);
-  const hasVat = vatRate > 0;
+  /* Numbers arrive from PostgREST as strings. Parsed once, here, so the
+     document component deals in numbers and nothing downstream re-parses. */
+  const document: QuoteDocumentData = {
+    quoteNumber: quote.quoteNumber,
+    title: quote.title,
+    issuedAt: quote.issuedAt,
+    validUntil: quote.validUntil,
+    notes: quote.notes,
+    subtotal: Number(quote.subtotal),
+    taxAmount: Number(quote.taxAmount ?? 0),
+    vatRate: Number(quote.vatRate),
+    total: Number(quote.total),
+    clientName: quote.clientName,
+    business: quote.business,
+    items: quote.items.map((item) => ({
+      id: item.id,
+      description: item.description,
+      quantity: Number(item.quantity),
+      unitPrice: Number(item.unitPrice),
+      lineTotal: Number(item.lineTotal),
+    })),
+  };
 
   return (
     /*
@@ -119,56 +144,6 @@ export default async function PublicQuotePage({
       page instead of being pinned to the top of the window.
     */
     <main id="main" tabIndex={-1} className="mx-auto flex w-full max-w-document flex-1 flex-col gap-4 px-4 py-6 md:gap-5 md:py-12">
-      {/* ------------------------------------------------------- business */}
-      <header className="flex items-center gap-3">
-        {quote.business.logoUrl ? (
-          /*
-            The largest thing painted above the fold, so it decides the LCP.
-            next/image lazy loads by default, which is right almost everywhere
-            and wrong here: the client lands on a pricing document and the first
-            thing they see is an empty square where the business's logo belongs,
-            filled in a moment later.
-
-            eager + high rather than the `priority` prop, which Next 16
-            deprecated, and rather than `preload`, which the docs say not to
-            combine with fetchPriority. The image sits in the first element of
-            the body, so the preload scanner finds it immediately anyway; what
-            it was missing was permission to load and a place in the queue.
-
-            The dashboard header logo is deliberately left lazy. It sits behind
-            a login, in a context where nobody is forming a first impression.
-          */
-          <Image
-            src={quote.business.logoUrl}
-            alt={quote.business.name}
-            width={56}
-            height={56}
-            loading="eager"
-            fetchPriority="high"
-            className="h-14 w-14 shrink-0 rounded-tile border border-border bg-surface object-contain"
-          />
-        ) : (
-          <span
-            aria-hidden="true"
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-tile bg-brand text-2xl font-bold text-brand-foreground"
-          >
-            {quote.business.name.trim().charAt(0) || "ת"}
-          </span>
-        )}
-
-        <div className="min-w-0">
-          <p className="truncate text-lg font-bold">{quote.business.name}</p>
-          {businessPhone ? (
-            <a
-              href={`tel:${businessPhone.e164}`}
-              className="numeric text-sm text-brand hover:underline"
-            >
-              {businessPhone.local}
-            </a>
-          ) : null}
-        </div>
-      </header>
-
       {quote.status === "approved" ? (
         /*
           A status message, not a document heading. It was an h2, and because it
@@ -176,9 +151,6 @@ export default async function PublicQuotePage({
           h1, which leaves a screen reader navigating by heading to meet a level
           two before a level one. role="status" is also the accurate description
           of what this banner is.
-
-          text-xl rather than the h2 default of 1.3125rem: a 1px difference, and
-          the alternative was an arbitrary value.
         */
         <section
           role="status"
@@ -214,93 +186,7 @@ export default async function PublicQuotePage({
         </section>
       ) : null}
 
-      {/* ---------------------------------------------------------- quote */}
-      <section className="overflow-hidden rounded-card border border-border bg-surface shadow-sm">
-        <div className="border-b border-border px-5 py-4">
-          {/*
-            The subject belongs in the h1 rather than under it. A client
-            holding three quotes from the same tradesperson gets told which one
-            this is by the first line they read, and by the browser tab.
-
-            Quotes written before the field existed have no title, and fall
-            back to exactly the heading they have always had.
-          */}
-          <h1 className="text-2xl font-bold md:text-3xl">
-            {quote.title ? `הצעת מחיר עבור ${quote.title}` : "הצעת מחיר"}
-          </h1>
-          {/* The digits are isolated, the line is not. Putting .numeric on the
-              paragraph turned the whole line LTR and left-aligned it under a
-              right-aligned title. */}
-          <p className="mt-0.5 text-sm text-muted">
-            <span className="numeric">#{quote.quoteNumber}</span> ·{" "}
-            <span className="numeric">{formatDate(quote.issuedAt)}</span>
-          </p>
-          {quote.clientName ? (
-            <p className="mt-2 text-sm">
-              {/* "לכבוד", not "עבור": now that the heading says what the quote
-                  is for, the same word cannot also mean who it is for. */}
-              <span className="text-muted">לכבוד: </span>
-              <span className="font-semibold">{quote.clientName}</span>
-            </p>
-          ) : null}
-        </div>
-
-        <ul className="divide-y divide-border">
-          {quote.items.map((item) => (
-            <li key={item.id} className="flex items-start gap-3 px-5 py-3.5">
-              <div className="min-w-0 flex-1">
-                <p className="font-medium leading-snug">{item.description}</p>
-                <p className="mt-0.5 text-sm text-muted">
-                  <span className="numeric">
-                    {formatQuantity(Number(item.quantity))}
-                  </span>{" "}
-                  ×{" "}
-                  <span className="numeric">
-                    {formatILS(Number(item.unitPrice))}
-                  </span>
-                </p>
-              </div>
-              <span className="numeric shrink-0 font-semibold">
-                {formatILS(Number(item.lineTotal))}
-              </span>
-            </li>
-          ))}
-        </ul>
-
-        <dl className="flex flex-col gap-2 border-t-2 border-foreground/10 bg-background px-5 py-4">
-          {hasVat ? (
-            <>
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <dt className="text-muted">סכום לפני מע״מ</dt>
-                <dd className="numeric font-medium">
-                  {formatILS(Number(quote.subtotal))}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <dt className="text-muted">מע״מ {formatVatRate(vatRate)}</dt>
-                <dd className="numeric font-medium">
-                  {formatILS(Number(quote.taxAmount ?? 0))}
-                </dd>
-              </div>
-            </>
-          ) : null}
-
-          <div className="flex items-baseline justify-between gap-3">
-            <dt className="text-base font-semibold">סה״כ לתשלום</dt>
-            <dd className="numeric text-3xl font-bold">
-              {formatILS(Number(quote.total))}
-            </dd>
-          </div>
-
-          {/* Stated either way. A client comparing two quotes needs to know
-              whether they are comparing like with like. */}
-          <p className="text-xs text-muted">
-            {hasVat
-              ? `הסכום כולל מע״מ ${formatVatRate(vatRate)}.`
-              : "הסכום אינו כולל מע״מ."}
-          </p>
-        </dl>
-      </section>
+      <QuoteDocument quote={document} />
 
       {isOpen ? (
         <QuoteDecision
@@ -309,23 +195,12 @@ export default async function PublicQuotePage({
         />
       ) : null}
 
-      {quote.validUntil ? (
-        <p className="text-center text-sm text-muted">
-          ההצעה בתוקף עד{" "}
-          <span className="numeric font-semibold text-foreground">
-            {formatDate(quote.validUntil)}
-          </span>
-        </p>
-      ) : null}
-
-      {quote.notes ? (
-        <section className="rounded-card border border-border bg-surface p-5">
-          <h2 className="text-sm font-semibold text-muted">תנאים והערות</h2>
-          <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed">
-            {quote.notes}
-          </p>
-        </section>
-      ) : null}
+      {/*
+        Some clients want a file, not a link — a building committee, a company,
+        an accountant. This is that, without leaving the page they are already
+        on and without asking them to install anything.
+      */}
+      <SavePdfButton fileName={quoteFileName(document)} />
 
       {businessPhone ? (
         <a

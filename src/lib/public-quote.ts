@@ -83,6 +83,18 @@ export async function loadPublicQuote(
 
   if (!quote) return null;
 
+  /*
+   * A draft has never been sent. The token exists from the moment the row does,
+   * which used to mean a quote still being priced was readable — and approvable
+   * — by anyone holding the link. Treated as missing rather than as a special
+   * page: there is nothing here to tell a client about, and saying "this quote
+   * is not ready" would confirm to a stranger that the link is real.
+   *
+   * Tapping the WhatsApp button flips the quote to sent before the client ever
+   * opens it, so the ordinary path is unaffected.
+   */
+  if (quote.status === "draft") return null;
+
   const [{ data: business }, { data: client }, { data: items }] =
     await Promise.all([
       supabase

@@ -13,6 +13,43 @@ export function formatVatRate(rate: number): string {
   return `${Math.round(rate * 100)}%`;
 }
 
+/**
+ * The three things an owner can mean by the number they typed.
+ *
+ * The database stores this as two fields — a rate and a flag — because that is
+ * what the money trigger needs. But two booleans make four states, one of
+ * which ("no VAT, and the prices include it") means nothing, and asking
+ * someone two questions to express one choice is how the quick screen ended up
+ * assuming the answer instead. One value here, expanded to the two columns at
+ * the edge.
+ */
+export type VatMode = "exclusive" | "inclusive" | "none";
+
+/** How a mode is stored. */
+export function vatFieldsFor(mode: VatMode): {
+  vatRate: number;
+  pricesIncludeVat: boolean;
+} {
+  if (mode === "none") return { vatRate: 0, pricesIncludeVat: false };
+  return { vatRate: VAT_RATE, pricesIncludeVat: mode === "inclusive" };
+}
+
+/** How a stored quote reads back. */
+export function vatModeFrom(
+  vatRate: number,
+  pricesIncludeVat: boolean,
+): VatMode {
+  if (vatRate === 0) return "none";
+  return pricesIncludeVat ? "inclusive" : "exclusive";
+}
+
+/** Narrows an untrusted string — a query parameter, a form field. */
+export function toVatMode(value: unknown, fallback: VatMode): VatMode {
+  return value === "exclusive" || value === "inclusive" || value === "none"
+    ? value
+    : fallback;
+}
+
 export type VatBreakdown = {
   /** Always the amount before VAT. */
   subtotal: number;

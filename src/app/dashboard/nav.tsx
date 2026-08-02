@@ -21,6 +21,7 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { href: "/dashboard", label: "הצעות" },
   { href: "/dashboard/clients", label: "לקוחות" },
+  { href: "/dashboard/pricelist", label: "מחירון" },
   { href: "/dashboard/forms", label: "שאלונים" },
   { href: "/dashboard/stats", label: "סיכום" },
   { href: "/dashboard/settings", label: "הגדרות" },
@@ -32,7 +33,7 @@ export function DashboardNav() {
   return (
     <nav
       aria-label="ניווט ראשי"
-      className="sticky bottom-0 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] md:order-first md:top-8 md:bottom-auto md:w-44 md:shrink-0 md:self-start md:border-t-0 md:bg-transparent md:pt-8 md:pb-0 lg:w-56"
+      className="print-hide sticky bottom-0 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] md:order-first md:top-8 md:bottom-auto md:w-44 md:shrink-0 md:self-start md:border-t-0 md:bg-transparent md:pt-8 md:pb-0 lg:w-56"
     >
       <ul className="mx-auto flex w-full max-w-2xl md:max-w-none md:flex-col md:gap-1">
         {TABS.map((tab) => {

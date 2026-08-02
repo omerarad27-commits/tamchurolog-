@@ -24,7 +24,7 @@ export function dashboardBackTarget(pathname: string): BackTarget | null {
 
   /* Editing a quote returns to that quote, not past it: the owner came to
      change something and wants to see the result. */
-  const editing = pathname.match(/^\/dashboard\/quotes\/([^/]+)\/edit$/);
+  const editing = pathname.match(/^\/dashboard\/quotes\/([^/]+)\/(edit|print)$/);
   if (editing) {
     return { href: `/dashboard/quotes/${editing[1]}`, label: "חזרה להצעה" };
   }

@@ -5,10 +5,11 @@ import { requireBusiness } from "@/lib/auth";
 import { formatDateTime } from "@/lib/format";
 import {
   loadNotifications,
-  markAllNotificationsRead,
   notificationHref,
   notificationText,
 } from "@/lib/notifications";
+
+import { MarkNotificationsReadOnMount } from "./mark-read-on-mount";
 
 export const metadata: Metadata = {
   title: "התראות | תמחורולוג",
@@ -16,16 +17,17 @@ export const metadata: Metadata = {
 
 export default async function NotificationsPage() {
   /*
-   * Loaded before marking read, so this render still shows which ones were new.
-   * The next visit sees them all as read, which is the correct answer: the
-   * owner has now looked at them.
+   * Marking read happens client-side after mount (see
+   * `MarkNotificationsReadOnMount`), so this render still shows which ones
+   * were new. The next visit sees them all as read, which is the correct
+   * answer: the owner has now looked at them.
    */
   const context = await requireBusiness();
   const notifications = await loadNotifications(context);
-  await markAllNotificationsRead(context);
 
   return (
     <div className="flex flex-col gap-5">
+      <MarkNotificationsReadOnMount />
       <h1 className="text-2xl font-bold">התראות</h1>
 
       {notifications.length === 0 ? (

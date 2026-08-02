@@ -7,10 +7,12 @@ import { publicEnv } from "@/lib/env";
 import { formatDate, formatDateTime, formatILS, formatQuantity } from "@/lib/format";
 import { formatPhoneForDisplay } from "@/lib/phone";
 import { ButtonLink } from "@/components/ui/button";
+import { pickTip } from "@/lib/tips";
 import { isQuoteEditable, type Client, type Quote, type QuoteLineItem } from "@/lib/types";
 import { formatVatRate } from "@/lib/vat";
 import { buildQuoteMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 
+import { Tip } from "../../tip";
 import { SendQuote } from "./send-quote";
 
 export const metadata: Metadata = {
@@ -19,8 +21,10 @@ export const metadata: Metadata = {
 
 export default async function QuotePage({
   params,
+  searchParams,
 }: PageProps<"/dashboard/quotes/[id]">) {
   const { id } = await params;
+  const { send } = await searchParams;
   const { supabase, business } = await requireBusiness();
 
   const { data: quoteRow } = await supabase
@@ -53,6 +57,13 @@ export default async function QuotePage({
   const publicUrl = `${publicEnv.appUrl}/q/${quote.public_token}`;
   const vatRate = Number(quote.vat_rate);
   const hasVat = vatRate > 0;
+
+  /* Only on a quote the client has already decided: that is the page where the
+     owner has nowhere left to go, and the only page this tip makes sense on. */
+  const tip = pickTip(
+    isQuoteEditable(quote.status) ? [] : ["duplicate"],
+    business.dismissed_tips,
+  );
 
   const whatsapp = buildWhatsAppUrl(
     client?.phone ?? null,
@@ -103,9 +114,17 @@ export default async function QuotePage({
 
       <section className="overflow-hidden rounded-card border border-border bg-surface shadow-sm">
         <h2 className="border-b border-border px-5 py-3 text-sm font-semibold text-muted">
-          פירוט
+          {items.length > 0 ? "פירוט" : "ההצעה"}
         </h2>
 
+        {/* A quote written as one figure has no breakdown to show. Its subject
+            is the whole description, and it is the only thing the client sees
+            above the total. */}
+        {items.length === 0 ? (
+          <p className="px-5 py-3 font-medium">
+            {quote.title ?? "הצעה ללא פירוט פריטים"}
+          </p>
+        ) : (
         <ul className="divide-y divide-border">
           {items.map((item) => (
             <li key={item.id} className="flex items-start gap-3 px-5 py-3">
@@ -127,6 +146,7 @@ export default async function QuotePage({
             </li>
           ))}
         </ul>
+        )}
 
         <dl className="flex flex-col gap-1.5 border-t border-border px-5 py-4 text-sm">
           {hasVat ? (
@@ -208,22 +228,70 @@ export default async function QuotePage({
         </section>
       ) : null}
 
+      {/*
+        The moment a decided quote is opened is exactly when duplicating is
+        worth knowing about: the owner is looking at a page that used to be a
+        dead end. Shown once, and only here.
+      */}
+      {tip === "duplicate" ? (
+        <Tip
+          id="duplicate"
+          action={{
+            href: `/dashboard/quotes/new?from=${quote.id}`,
+            label: "שכפול ההצעה",
+          }}
+        >
+          אפשר לשכפל את ההצעה הזו ללקוח אחר — כל הפריטים והתנאים עוברים, ורק
+          הלקוח והתאריך מתחלפים.
+        </Tip>
+      ) : null}
+
       {isQuoteEditable(quote.status) ? (
         <ButtonLink href={`/dashboard/quotes/${quote.id}/edit`} variant="secondary">
           עריכת ההצעה
         </ButtonLink>
       ) : (
         <p className="rounded-tile border border-border bg-background px-3 py-2.5 text-sm text-muted">
-          הלקוח כבר הכריע לגבי ההצעה הזו, ולכן היא נעולה לעריכה. אפשר ליצור הצעה
-          חדשה.
+          הלקוח כבר הכריע לגבי ההצעה הזו, ולכן היא נעולה לעריכה. אפשר לשכפל אותה
+          ללקוח אחר.
         </p>
       )}
+
+      {/*
+        Available on every quote, decided ones included — that is where it earns
+        its place. An approved quote is the proof that this price works, and
+        until now a decided quote was a dead end with no way forward from it.
+
+        It writes nothing: it opens the new-quote form loaded with these
+        contents, so the original stays exactly as the client saw it. Duplicating
+        is not editing.
+      */}
+      <ButtonLink
+        href={`/dashboard/quotes/new?from=${quote.id}`}
+        variant="secondary"
+      >
+        שכפול ההצעה
+      </ButtonLink>
+
+      {/* For the clients who want a file rather than a link — a company, a
+          building committee, an accountant. Its own route, so what prints is
+          the document and not this workspace. */}
+      <ButtonLink
+        href={`/dashboard/quotes/${quote.id}/print`}
+        variant="secondary"
+      >
+        שמירה כ־PDF
+      </ButtonLink>
 
       <SendQuote
         quoteId={quote.id}
         url={whatsapp.url}
         hasRecipient={whatsapp.hasRecipient}
         alreadySent={quote.status !== "draft"}
+        /* Arriving from the quick route, which owes the owner an open WhatsApp
+           window. Only honoured on a draft, so a bookmark or a back button
+           carrying the parameter cannot reopen a send that already happened. */
+        autoOpen={send === "1" && quote.status === "draft"}
       />
 
       <section className="rounded-card border border-border bg-surface p-5 shadow-sm">
@@ -235,14 +303,26 @@ export default async function QuotePage({
           {publicUrl}
         </p>
 
-        <a
-          href={publicUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3 inline-flex h-control w-full items-center justify-center rounded-control border border-border bg-surface text-base font-semibold transition-colors hover:bg-background"
-        >
-          פתיחת הקישור בלשונית חדשה
-        </a>
+        {/*
+          The link only starts working when the quote is sent, so while it is a
+          draft this says so instead of offering to open a page that answers
+          404. A quote still being priced must not be readable — let alone
+          approvable — by anyone who happens to hold the address.
+        */}
+        {quote.status === "draft" ? (
+          <p className="mt-3 rounded-tile border border-border bg-background px-3 py-2.5 text-sm text-muted">
+            הקישור עוד לא פעיל. הוא ייפתח ללקוח ברגע שתשלח את ההצעה.
+          </p>
+        ) : (
+          <a
+            href={publicUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex h-control w-full items-center justify-center rounded-control border border-border bg-surface text-base font-semibold transition-colors hover:bg-background"
+          >
+            פתיחת הקישור בלשונית חדשה
+          </a>
+        )}
 
         <dl className="mt-4 flex flex-col gap-1.5 text-sm">
           <div className="flex justify-between gap-3">

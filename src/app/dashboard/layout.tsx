@@ -20,7 +20,7 @@ export default async function DashboardLayout({
         public page needed one too, and one link before <body>'s content beats
         a copy per layout. The #main it targets is the <main> below.
       */}
-      <header className="border-b border-border bg-surface">
+      <header className="print-hide border-b border-border bg-surface">
         <div className="mx-auto flex w-full max-w-app items-center gap-3 px-5 py-3">
           {business.logo_url ? (
             <Image

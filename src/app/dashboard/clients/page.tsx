@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { ButtonLink } from "@/components/ui/button";
 import { requireBusiness } from "@/lib/auth";
 import { formatPhoneForDisplay } from "@/lib/phone";
 import type { Client } from "@/lib/types";
+
+import { ClientList } from "./client-list";
 
 export const metadata: Metadata = {
   title: "לקוחות | תמחורולוג",
@@ -45,34 +46,16 @@ export default async function ClientsPage() {
           </ButtonLink>
         </div>
       ) : (
-        /* Same shape as the quote list, for the same reason: a name at one edge
-           and a chevron at the other with 900px between them is not a row. */
-        <ul className="grid gap-2 lg:grid-cols-2">
-          {clients.map((client) => (
-            <li key={client.id}>
-              <Link
-                href={`/dashboard/clients/${client.id}`}
-                className="flex items-center gap-3 rounded-card border border-border bg-surface p-4 transition-colors hover:bg-background"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold">{client.full_name}</p>
-                  {client.phone ? (
-                    <p className="truncate text-sm text-muted">
-                      <span className="numeric">
-                        {formatPhoneForDisplay(client.phone)}
-                      </span>
-                    </p>
-                  ) : (
-                    <p className="truncate text-sm text-warning">חסר טלפון</p>
-                  )}
-                </div>
-                <span aria-hidden="true" className="text-muted">
-                  ‹
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <ClientList
+          rows={clients.map((client) => ({
+            id: client.id,
+            fullName: client.full_name,
+            phoneLabel: client.phone
+              ? formatPhoneForDisplay(client.phone)
+              : null,
+            phoneDigits: (client.phone ?? "").replace(/\D/g, ""),
+          }))}
+        />
       )}
     </div>
   );

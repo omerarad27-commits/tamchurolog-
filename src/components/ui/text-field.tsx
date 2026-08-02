@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import { forwardRef, type ComponentProps } from "react";
 
 /**
  * Shared look for every single-line control: inputs, selects, and the bare
@@ -18,22 +18,33 @@ type TextFieldProps = ComponentProps<"input"> & {
   hint?: string;
 };
 
-export function TextField({
-  label,
-  name,
-  hint,
-  className = "",
-  ...props
-}: TextFieldProps) {
-  const hintId = hint ? `${name}-hint` : undefined;
+/*
+ * Ref-forwarding, so a caller that needs the element itself can have it. The
+ * price list uses it to put the cursor back on the name field after each add,
+ * which is the difference between typing a list of eight items and reaching for
+ * the field eight times.
+ */
+export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
+  function TextField({ label, name, hint, id, className = "", ...props }, ref) {
+  /*
+   * The field name doubles as the element id, which is right almost everywhere:
+   * one form per screen, one field per name. Where that does not hold — two
+   * copies of the same form on one page, such as the price list's add form and
+   * an open row editor — the caller passes an id and the label follows it.
+   * Without that, two elements share an id and the label points at whichever
+   * one the browser happens to find first.
+   */
+  const fieldId = id ?? name;
+  const hintId = hint ? `${fieldId}-hint` : undefined;
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={name} className="text-sm font-medium text-foreground">
+      <label htmlFor={fieldId} className="text-sm font-medium text-foreground">
         {label}
       </label>
       <input
-        id={name}
+        ref={ref}
+        id={fieldId}
         name={name}
         aria-describedby={hintId}
         className={`${inputClasses} ${className}`}
@@ -46,4 +57,5 @@ export function TextField({
       ) : null}
     </div>
   );
-}
+  },
+);

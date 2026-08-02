@@ -10,6 +10,13 @@ export type Business = {
   logo_url: string | null;
   default_terms: string | null;
   currency: string;
+  /**
+   * Ids of the in-app tips this owner has closed. See lib/tips.ts.
+   *
+   * On the business rather than in the browser, because "dismissed" has to mean
+   * dismissed on the laptop too.
+   */
+  dismissed_tips: string[];
   created_at: string;
 };
 
@@ -20,6 +27,22 @@ export type Client = {
   phone: string | null;
   email: string | null;
   notes: string | null;
+  created_at: string;
+};
+
+/**
+ * One line of the owner's own price list: what they call the job, and what they
+ * usually charge for it.
+ *
+ * Copied into a quote by value, never referenced. See the migration for why.
+ */
+export type PriceListItem = {
+  id: string;
+  business_id: string;
+  name: string;
+  /** Postgres numeric arrives as a string over PostgREST. */
+  unit_price: string;
+  sort_order: number;
   created_at: string;
 };
 

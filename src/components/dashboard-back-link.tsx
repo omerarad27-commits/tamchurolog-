@@ -22,7 +22,7 @@ export function DashboardBackLink() {
   return (
     <Link
       href={target.href}
-      className="-m-2 mb-2 inline-flex items-center gap-1 self-start rounded-control p-2 text-sm font-medium text-muted transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+      className="print-hide -m-2 mb-2 inline-flex items-center gap-1 self-start rounded-control p-2 text-sm font-medium text-muted transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
     >
       {/*
         The chevron points right because the page does: in RTL, back is
