@@ -22,6 +22,7 @@
     "verify:csp": "node --env-file=.env.local scripts/verify-csp.mjs",
     "verify:redirect": "node --env-file=.env.local scripts/verify-redirect.mjs",
     "verify:quote": "node --env-file=.env.local scripts/verify-quote-page.mjs",
+    "verify:quick-send": "node --env-file=.env.local scripts/verify-quick-send.mjs",
     "verify:seo": "node scripts/verify-seo.mjs",
     "verify:a11y": "node --env-file=.env.local scripts/verify-a11y.mjs",
     "verify:bidi": "node --experimental-strip-types scripts/verify-bidi.mjs",

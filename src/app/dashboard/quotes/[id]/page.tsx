@@ -288,10 +288,10 @@ export default async function QuotePage({
         url={whatsapp.url}
         hasRecipient={whatsapp.hasRecipient}
         alreadySent={quote.status !== "draft"}
-        /* Arriving from the quick route, which owes the owner an open WhatsApp
-           window. Only honoured on a draft, so a bookmark or a back button
-           carrying the parameter cannot reopen a send that already happened. */
-        autoOpen={send === "1" && quote.status === "draft"}
+        /* Arriving from the quick route with the send still to do. Only on a
+           draft, so a bookmark or a back button carrying the parameter cannot
+           re-announce a send that already happened. */
+        awaitingSend={send === "1" && quote.status === "draft"}
       />
 
       <section className="rounded-card border border-border bg-surface p-5 shadow-sm">
