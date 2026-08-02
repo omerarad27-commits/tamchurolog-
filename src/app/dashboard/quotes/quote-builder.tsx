@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId, useState, useTransition } from "react";
+import { useActionState, useId, useRef, useState, useTransition } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button, ButtonLink } from "@/components/ui/button";
@@ -190,14 +190,34 @@ export function QuoteBuilder({
     priceList.some((item) => sameName(item.name, description)) ||
     savedNames.some((name) => sameName(name, description));
 
+  /*
+   * The line items section, so a blur can tell whether focus stayed inside it.
+   * See considerOffer.
+   */
+  const linesSectionRef = useRef<HTMLElement>(null);
+
   /**
    * Considers a line for the offer once the owner has finished with it.
    *
    * Called on blur rather than on change: mid-typing, every line looks like a
    * new one, and an offer that appears on the third keystroke is a flicker.
+   *
+   * It only fires when focus moved to another control inside the line items,
+   * and that condition is the important one. The offer is a block in the normal
+   * flow, so showing it pushes everything below it down — including the save
+   * button. Tapping save moves focus out of the price field, which fired this,
+   * which grew the page between the finger going down and coming up, and the
+   * tap landed on nothing. The owner pressed the biggest button on the screen
+   * and the form did not submit.
+   *
+   * So: someone leaving the items section is on their way somewhere, and gets
+   * no offer. Someone moving to the next field is still working, and does.
    */
-  const considerOffer = (line: DraftLine) => {
+  const considerOffer = (line: DraftLine, movingTo: EventTarget | null) => {
     if (offerSpent || offerKey) return;
+
+    const next = movingTo instanceof Node ? movingTo : null;
+    if (!next || !linesSectionRef.current?.contains(next)) return;
 
     const description = line.description.trim();
     const price = toNumber(line.unitPrice);
@@ -385,7 +405,7 @@ export function QuoteBuilder({
       </section>
 
       {/* ----------------------------------------------------- line items */}
-      <section className="flex flex-col gap-3">
+      <section ref={linesSectionRef} className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">המחיר</h2>
 
         {/* Same segmented control as the VAT price mode below, because it is
@@ -453,7 +473,7 @@ export function QuoteBuilder({
                   onChange={(event) =>
                     updateLine(line.key, { description: event.target.value })
                   }
-                  onBlur={() => considerOffer(line)}
+                  onBlur={(event) => considerOffer(line, event.relatedTarget)}
                   placeholder="תיאור העבודה או החומר"
                   maxLength={300}
                   className={inputClasses}
@@ -492,7 +512,7 @@ export function QuoteBuilder({
                     onChange={(event) =>
                       updateLine(line.key, { unitPrice: event.target.value })
                     }
-                    onBlur={() => considerOffer(line)}
+                    onBlur={(event) => considerOffer(line, event.relatedTarget)}
                     inputMode="decimal"
                     dir="ltr"
                     placeholder="0"

@@ -70,9 +70,23 @@ async function seed() {
     .select("id")
     .single();
 
+  /*
+   * Seeded as 'sent', not left as a draft.
+   *
+   * An unsent quote is no longer reachable at its public link - a draft is a
+   * price still being worked out, and it must not be readable or approvable by
+   * whoever holds the address. This script needs a page it can load and a
+   * Server Action it can fire under the policy, so it sends the quote first,
+   * exactly as the client would have received it.
+   */
   const { data: quote } = await admin
     .from("quotes")
-    .insert({ business_id: biz.id, client_id: client.id })
+    .insert({
+      business_id: biz.id,
+      client_id: client.id,
+      status: "sent",
+      sent_at: new Date().toISOString(),
+    })
     .select("id, public_token")
     .single();
 

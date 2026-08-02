@@ -52,9 +52,19 @@ async function seed() {
     .from("clients")
     .insert({ business_id: biz.id, full_name: "אורי כהן", phone: "0541234567" })
     .select("id").single();
+  /*
+   * Sent, not left as a draft. An unsent quote is not reachable at its public
+   * link - it is a price still being worked out - so a draft would give this
+   * script a 404 to inspect for landmarks and footer links.
+   */
   const { data: quote } = await admin
     .from("quotes")
-    .insert({ business_id: biz.id, client_id: client.id })
+    .insert({
+      business_id: biz.id,
+      client_id: client.id,
+      status: "sent",
+      sent_at: new Date().toISOString(),
+    })
     .select("id, public_token").single();
   await admin.from("quote_line_items").insert([
     { quote_id: quote.id, description: "עבודה", quantity: 1, unit_price: 500, sort_order: 0 },

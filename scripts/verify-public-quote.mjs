@@ -457,13 +457,20 @@ async function main() {
 
   console.log("\n9. Prices entered inclusive of VAT");
 
+  /*
+   * Seeded as 'sent'. A draft is not reachable at its public link and cannot be
+   * decided - an unsent quote is a price still being worked out, and neither
+   * the page nor record_quote_decision will act on one. Every quote below is
+   * examined the way a client would meet it, which means after it was sent.
+   */
   const quoteFor = async (amount, includeVat, rate = 0.18) => {
     const { data } = await admin
       .from("quotes")
       .insert({
         business_id: openQuote.business_id,
         client_id: openQuote.client_id,
-        status: "draft",
+        status: "sent",
+        sent_at: new Date().toISOString(),
         vat_rate: rate,
         prices_include_vat: includeVat,
       })
@@ -573,8 +580,26 @@ async function main() {
   check("the old link no longer shows any prices",
     !oldLink.body.includes("1,000.00"));
 
+  /*
+   * The rotation dropped the quote back to draft, and a draft is not live.
+   *
+   * That is the whole point of the pair: the owner has just produced a version
+   * nobody has seen, so neither the retired link nor the fresh one shows a
+   * price until they deliberately send it again. The edit form says so before
+   * they save.
+   */
+  const newLinkBeforeSend = await visit(BROWSER_UA, `/q/${newToken}`);
+  check("the new link is not live until the quote is sent again",
+    newLinkBeforeSend.status === 404 && !newLinkBeforeSend.body.includes("1,000.00"),
+    `status ${newLinkBeforeSend.status}`);
+
+  await admin
+    .from("quotes")
+    .update({ status: "sent", sent_at: new Date().toISOString() })
+    .eq("id", sentQuote.id);
+
   const newLink = await visit(BROWSER_UA, `/q/${newToken}`);
-  check("the new link shows the quote", newLink.status === 200 &&
+  check("once sent again, the new link shows the quote", newLink.status === 200 &&
     newLink.body.includes("1,000.00"), `status ${newLink.status}`);
 
   const anonRevoked = await anonClient.from("quote_revoked_tokens").select("token");
